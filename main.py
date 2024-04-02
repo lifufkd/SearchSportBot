@@ -19,8 +19,21 @@ def second_phase(user_id):
     team_correct_name = temp_user_data.temp_data(user_id)[user_id][3]
     parser_obj = temp_user_data.temp_data(user_id)[user_id][4]
     data = parser_obj.second_phase(team_correct_name)
-    print(data)
-    del parser_obj
+    buttons = Bot_inline_btns()
+    match len(data):
+        case 0:
+            temp_user_data.temp_data(user_id)[user_id][0] = 0
+            bot.send_message(user_id, 'Нет ближайших матчей для этой команды, попробуй другую команду')
+        case 1:
+            temp_user_data.temp_data(user_id)[user_id][6] = data
+            print(temp_user_data.temp_data(user_id)[user_id][6])
+            del parser_obj, temp_user_data.temp_data(user_id)[user_id][4]
+            #поиск кэфов по этому одному матчу
+        case _:
+            temp_user_data.temp_data(user_id)[user_id][0] = 4
+            temp_user_data.temp_data(user_id)[user_id][5] = data
+            bot.send_message(user_id, f'Найдено {len(data)} матча: ', reply_markup=buttons.games_btns(data))
+
 
 def main():
     @bot.message_handler(commands=['start', 'admin'])
@@ -53,8 +66,12 @@ def main():
                 temp_user_data.temp_data(user_id)[user_id][1] = command[5:]
                 bot.send_message(user_id, 'Напиши название команды')
             elif command[:4] == 'team' and code == 1:
-                temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][command[4:]]
+                temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
                 second_phase(user_id)
+            elif command[:4] == 'game' and code == 4:
+                temp_user_data.temp_data(user_id)[user_id][6] = temp_user_data.temp_data(user_id)[user_id][5][int(command[4:])]
+                print(temp_user_data.temp_data(user_id)[user_id][6])
+                #third_phase(user_id)
             if db_actions.user_is_admin(user_id):
                 if command == 'export':
                     db_actions.db_export_xlsx()
@@ -72,14 +89,18 @@ def main():
             match code:
                 case 0:
                     if user_input is not None:
-                        parser = AllMatches()
-                        parser.init()
-                        status = parser.first_phase(user_input)
+                        if temp_user_data.temp_data(user_id)[user_id][4] is None:
+                            parser = AllMatches()
+                            parser.init()
+                            status = parser.first_phase(user_input)
+                        else:
+                            status = temp_user_data.temp_data(user_id)[user_id][4].first_phase(user_input)
                         match status[0]:
                             case 0:
                                 bot.send_message(user_id, 'Такая команда не найдена, попробуйте ввести ещё раз')
                             case 1:
                                 temp_user_data.temp_data(user_id)[user_id][2] = status[1]
+                                temp_user_data.temp_data(user_id)[user_id][4] = parser
                                 temp_user_data.temp_data(user_id)[user_id][0] = 1
                                 bot.send_message(user_id, 'По твоему запросу нашлось больше одной команды: ', reply_markup=buttons.teams_btns(status[1]))
                             case 2:

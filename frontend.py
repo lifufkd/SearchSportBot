@@ -32,10 +32,12 @@ class Bot_inline_btns:
             markup.add(btn)
         return markup
 
-    def bonus_btns(self):
-        take = types.InlineKeyboardButton('Получи 10% от продаж', callback_data='taketenprocents')
-        self.__markup.add(take)
-        return self.__markup
+    def games_btns(self, games):
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        for i, g in enumerate(games):
+            btn = types.InlineKeyboardButton(f'{g[0]} * {g[1].strftime("%d.%m.%Y, %H:%M")}', callback_data=f'game{i}')
+            markup.add(btn)
+        return markup
 
     def reviews_btns(self):
         link = types.InlineKeyboardButton('Отзывы', url='vk.com')

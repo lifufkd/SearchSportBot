@@ -50,15 +50,12 @@ class AllMatches:
 
     def init(self):
         chrome_options = uc.ChromeOptions()
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")  # linux only
         chrome_options.add_argument("--headless=new")  # for Chrome >= 109
-        self.__driver = uc.Chrome(options=chrome_options)
+        self.__driver = uc.Chrome()
 
     def first_phase(self, name):
         self.__driver.get('https://www.ligastavok.ru/')
-        time.sleep(1)
+        time.sleep(5)
         self.__driver.find_element(By.ID, f"header-search").click()
         time.sleep(1)
         self.__input_field = self.__driver.find_element(By.CLASS_NAME, 'search-input__input-25c7a1')
@@ -120,3 +117,6 @@ class AllMatches:
                 confirmed_teams.remove(confirmed_teams[confirmed_times.index(min_time)])
                 confirmed_times.remove(min_time)
         return out
+
+    def __del__(self):
+        self.__driver.close()
