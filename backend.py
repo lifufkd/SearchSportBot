@@ -16,7 +16,7 @@ class TempUserData:
 
     def temp_data(self, user_id):
         if user_id not in self.__user_data.keys():
-            self.__user_data.update({user_id: [None, None, [], None, None, [], None]})
+            self.__user_data.update({user_id: [None, None, [], [], []]})
         return self.__user_data
 
 
@@ -55,6 +55,19 @@ class DbAct:
             else:
                 status = False
             return status
+
+    def update_sport(self, sport, data):
+        self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team) VALUES(?, ?, ?)', data)
+
+    def last_sport_date(self, sport):
+        return self.__db.db_read(f'SELECT MAX(date) FROM "{sport}"', ())[0][0]
+
+    def get_team_matches(self, sport, team):
+        return self.__db.db_read(f'SELECT date, first_team, second_team FROM "{sport}" WHERE first_team LIKE lower("%{team}%") OR second_team LIKE lower("%{team}%") ORDER BY date ASC LIMIT 5 COLLATE NOCASE', ())
+
+    def get_team_matches_strict(self, sport, team):
+        return self.__db.db_read(f'SELECT date, first_team, second_team FROM "{sport}" WHERE first_team = "{team}" OR second_team = "{team}" ORDER BY date ASC LIMIT 5', ())
+
 
     def db_export_xlsx(self):
         d = {'Имя': [], 'Фамилия': [], 'Никнейм': []}

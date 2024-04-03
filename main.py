@@ -6,39 +6,45 @@ config_name = 'secrets.json'
 #####################################
 import os
 import telebot
+import schedule
+import time
 import platform
 import threading
 from threading import Lock
-from parser import ConfigParser, AllMatches, FonBet
+from datetime import datetime
+from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok
 from frontend import Bot_inline_btns
 from backend import TempUserData, DbAct
 from db import DB
 #####################################
 
 
-def second_phase(user_id):
-    team_correct_name = temp_user_data.temp_data(user_id)[user_id][3]
-    parser_obj = temp_user_data.temp_data(user_id)[user_id][4]
-    data = parser_obj.second_phase(team_correct_name)
-    buttons = Bot_inline_btns()
-    match len(data):
-        case 0:
-            temp_user_data.temp_data(user_id)[user_id][0] = 0
-            bot.send_message(user_id, 'Нет ближайших матчей для этой команды, попробуй другую команду')
-        case 1:
-            temp_user_data.temp_data(user_id)[user_id][6] = data
-            del parser_obj, temp_user_data.temp_data(user_id)[user_id][4]
-            get_all_ratio(user_id)
-        case _:
-            temp_user_data.temp_data(user_id)[user_id][0] = 4
-            temp_user_data.temp_data(user_id)[user_id][5] = data
-            bot.send_message(user_id, f'Найдено {len(data)} матча: ', reply_markup=buttons.games_btns(data))
+def sync_db():
+    if datetime.now().month == 1 and datetime.now().day == 1:
+        for sport in ['football', 'hockey', 'basketball']:
+            threading.Thread(target=UpdateMatches, args=(db_actions, sport)).start()
+
+
+def schedule_worker():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+def waiter(user_id, s=''):
+    while True:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 1:
+            break
+        time.sleep(1)
+    for i in temp_user_data.temp_data(user_id)[user_id][4]:
+        s += f'{i[0]}{i[1][0]}({i[1][1]}) - {i[2][0]}({i[2][1]})'
+    bot.send_message(user_id, s)
 
 
 def get_all_ratio(user_id):
-    selected_team = temp_user_data.temp_data(user_id)[user_id][6]
-    fon_bet = FonBet()
-    threading.Thread(target=fon_bet.parser, args=(selected_team, )).start()
+    selected_team = temp_user_data.temp_data(user_id)[user_id][3]
+    threading.Thread(target=LigaStavok, args=(selected_team, temp_user_data, user_id)).start()
+    threading.Thread(target=waiter, args=(user_id, )).start()
 
 
 def main():
@@ -68,15 +74,13 @@ def main():
         if db_actions.user_is_existed(user_id):
             code = temp_user_data.temp_data(user_id)[user_id][0]
             if command[:5] == 'sport':
+                print(command[1:])
                 temp_user_data.temp_data(user_id)[user_id][0] = 0
                 temp_user_data.temp_data(user_id)[user_id][1] = command[5:]
+                print(temp_user_data.temp_data(user_id)[user_id][1])
                 bot.send_message(user_id, 'Напиши название команды')
-            elif command[:4] == 'team' and code == 1:
+            elif command[:4] == 'game' and code == 1:
                 temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
-                second_phase(user_id)
-            elif command[:4] == 'game' and code == 4:
-                temp_user_data.temp_data(user_id)[user_id][6] = temp_user_data.temp_data(user_id)[user_id][5][int(command[4:])]
-                print(temp_user_data.temp_data(user_id)[user_id][6])
                 get_all_ratio(user_id)
             if db_actions.user_is_admin(user_id):
                 if command == 'export':
@@ -95,79 +99,33 @@ def main():
             match code:
                 case 0:
                     if user_input is not None:
-                        if temp_user_data.temp_data(user_id)[user_id][4] is None:
-                            parser = AllMatches()
-                            parser.init()
-                            status = parser.first_phase(user_input)
-                        else:
-                            status = temp_user_data.temp_data(user_id)[user_id][4].first_phase(user_input)
-                        match status[0]:
-                            case 0:
-                                bot.send_message(user_id, 'Такая команда не найдена, попробуйте ввести ещё раз')
-                            case 1:
-                                temp_user_data.temp_data(user_id)[user_id][2] = status[1]
-                                temp_user_data.temp_data(user_id)[user_id][4] = parser
-                                temp_user_data.temp_data(user_id)[user_id][0] = 1
-                                bot.send_message(user_id, 'По твоему запросу нашлось больше одной команды: ', reply_markup=buttons.teams_btns(status[1]))
-                            case 2:
+                        strict_data = db_actions.get_team_matches_strict(temp_user_data.temp_data(user_id)[user_id][1], user_input)
+                        if len(strict_data) > 0:
+                            if len(strict_data) == 1:
                                 temp_user_data.temp_data(user_id)[user_id][0] = None
-                                temp_user_data.temp_data(user_id)[user_id][3] = user_input
-                                temp_user_data.temp_data(user_id)[user_id][4] = parser
-                                second_phase(user_id)
-                        del parser
+                                temp_user_data.temp_data(user_id)[user_id][3] = strict_data[0]
+                                get_all_ratio(user_id)
+                            else:
+                                temp_user_data.temp_data(user_id)[user_id][2] = strict_data
+                                temp_user_data.temp_data(user_id)[user_id][0] = 1
+                                bot.send_message(user_id, f'Для твоей команды нашлось {len(strict_data)} матча: ',
+                                                 reply_markup=buttons.games_btns(strict_data))
+                        else:
+                            full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input.lower())
+                            if len(full_data) > 0:
+                                if len(full_data) == 1:
+                                    temp_user_data.temp_data(user_id)[user_id][0] = None
+                                    temp_user_data.temp_data(user_id)[user_id][3] = full_data[0]
+                                    get_all_ratio(user_id)
+                                else:
+                                    temp_user_data.temp_data(user_id)[user_id][2] = full_data
+                                    temp_user_data.temp_data(user_id)[user_id][0] = 1
+                                    bot.send_message(user_id, 'По твоему запросу нашлось больше одной команды: ',
+                                                     reply_markup=buttons.games_btns(full_data))
+                            else:
+                                bot.send_message(user_id, 'По твоему запросу не нашлось команд, попробуй ещё раз')
                     else:
                         bot.send_message(user_id, 'Это не текст!')
-                case 1:
-                    if photo is not None:
-                        photo_id = photo[-1].file_id
-                        photo_file = bot.get_file(photo_id)
-                        photo_bytes = bot.download_file(photo_file.file_path)
-                        temp_user_data.temp_data(user_id)[user_id][1][1] = photo_bytes
-                        temp_user_data.temp_data(user_id)[user_id][0] = 2
-                        bot.send_message(user_id, 'Отправьте описание товара')
-                    else:
-                        bot.send_message(user_id, 'Это не фото!')
-                case 2:
-                    if user_input is not None:
-                        temp_user_data.temp_data(user_id)[user_id][1][2] = user_input
-                        temp_user_data.temp_data(user_id)[user_id][0] = 3
-                        categories = db_actions.get_categories()
-                        bot.send_message(user_id, 'Выберите категорию для товара',
-                                         reply_markup=buttons.categories_btns(categories))
-                    else:
-                        bot.send_message(user_id, 'Это не текст!')
-                case 4:
-                    if user_input is not None:
-                        db_actions.add_category(user_input)
-                        temp_user_data.temp_data(user_id)[user_id][0] = None
-                        bot.send_message(user_id, 'Категория успешно добавлена!')
-                    else:
-                        bot.send_message(user_id, 'Это не текст!')
-                case 6:
-                    if user_input is not None:
-                        db_actions.update_product('name', user_input, temp_user_data.temp_data(user_id)[user_id][2])
-                        temp_user_data.temp_data(user_id)[user_id][0] = None
-                        bot.send_message(user_id, 'Товар успешно обновлён!')
-                    else:
-                        bot.send_message(user_id, 'Это не текст!')
-                case 7:
-                    if user_input is not None:
-                        db_actions.update_product('description', user_input,
-                                                  temp_user_data.temp_data(user_id)[user_id][2])
-                        temp_user_data.temp_data(user_id)[user_id][0] = None
-                        bot.send_message(user_id, 'Товар успешно обновлён!')
-                    else:
-                        bot.send_message(user_id, 'Это не текст!')
-                case 8:
-                    if photo is not None:
-                        photo_id = photo[-1].file_id
-                        photo_file = bot.get_file(photo_id)
-                        photo_bytes = bot.download_file(photo_file.file_path)
-                        db_actions.update_product('photo', photo_bytes, temp_user_data.temp_data(user_id)[user_id][2])
-                        temp_user_data.temp_data(user_id)[user_id][0] = None
-                        bot.send_message(user_id, 'Товар успешно обновлён!')
-                    else:
-                        bot.send_message(user_id, 'Это не фото!')
 
     bot.polling(none_stop=True)
 
@@ -179,5 +137,7 @@ if '__main__' == __name__:
     temp_user_data = TempUserData()
     db = DB(config.get_config()['db_file_name'], Lock())
     db_actions = DbAct(db, config, config.get_config()['xlsx_path'])
+    threading.Thread(target=schedule_worker).start()
+    schedule.every().day.at('00:00').do(sync_db)
     bot = telebot.TeleBot(config.get_config()['tg_api'])
     main()
