@@ -120,3 +120,32 @@ class AllMatches:
 
     def __del__(self):
         self.__driver.close()
+
+
+class FonBet:
+    def __init__(self):
+        super(FonBet, self).__init__()
+        self.__driver = None
+        self.__input_field = None
+
+    def init(self):
+        chrome_options = uc.ChromeOptions()
+        chrome_options.add_argument("--headless=new")  # for Chrome >= 109
+        self.__driver = uc.Chrome()
+
+    def parser(self, name):
+        self.init()
+        self.__driver.get('https://www.fon.bet/')
+        time.sleep(10)
+        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
+        time.sleep(0.5)
+        self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
+        time.sleep(1)
+        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
+        time.sleep(1)
+        self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(name[0])
+        time.sleep(3)
+        print(self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[3]/div[2]/div[1]/div/div[1]').text)
+
+
+
