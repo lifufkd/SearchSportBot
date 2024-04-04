@@ -33,17 +33,19 @@ def schedule_worker():
 
 def waiter(user_id, s=''):
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 1:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 2:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
-        s += f'{i[0]}{i[1][0]}({i[1][1]}) - {i[2][0]}({i[2][1]})'
+        s += f'{i[0]}{i[1][0]}({i[1][1]}) - {i[2][0]}({i[2][1]})\n'
     bot.send_message(user_id, s)
 
 
 def get_all_ratio(user_id):
     selected_team = temp_user_data.temp_data(user_id)[user_id][3]
+    sport = temp_user_data.temp_data(user_id)[user_id][1]
     threading.Thread(target=LigaStavok, args=(selected_team, temp_user_data, user_id)).start()
+    threading.Thread(target=FonBet, args=(selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, )).start()
 
 
@@ -108,7 +110,7 @@ def main():
                             else:
                                 temp_user_data.temp_data(user_id)[user_id][2] = strict_data
                                 temp_user_data.temp_data(user_id)[user_id][0] = 1
-                                bot.send_message(user_id, f'Для твоей команды нашлось {len(strict_data)} матча: ',
+                                bot.send_message(user_id, f'Для этой команды нашлось {len(strict_data)} матча: ',
                                                  reply_markup=buttons.games_btns(strict_data))
                         else:
                             full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input.lower())

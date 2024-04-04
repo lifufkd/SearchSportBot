@@ -96,29 +96,83 @@ class UpdateMatches:
 
 
 class FonBet:
-    def __init__(self):
+    def __init__(self, math, temp_user_data, user_id):
         super(FonBet, self).__init__()
+        self.__month = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
+                        'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11',
+                        'декабря': '12'}
+        self.__month_r = {'01': 'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
+                        '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
+                        '12': 'декабря'}
         self.__driver = None
+        self.__temp_data = temp_user_data
         self.__input_field = None
+        self.init()
+        self.parser(math, user_id)
 
     def init(self):
-        chrome_options = uc.ChromeOptions()
-        chrome_options.add_argument("--headless=new")  # for Chrome >= 109
-        self.__driver = uc.Chrome()
+        service = Service(executable_path='chromedriver.exe')
+        self.__driver = uc.Chrome(service=service)
 
-    def parser(self, name):
-        self.init()
+    def parser(self, math, user_id):
+        ratios = ['FonBet * ']
+        data = self.get_data(math).split('\n')
+        element_quanity = 0
+        months = math[0][5:7]
+        day = math[0][8:10]
+        times = math[0][11:16]
+        if day[0] == '0':
+            day = day[1]
+        right_date = f'{day} {self.__month_r[months]} в {times}'
+        for i, g in enumerate(data):
+            if '—' in g:
+                my_math = f'{math[1]} - {math[2]}'
+                element_quanity += 1
+                index = g.index('—')
+                team1 = g[:index-1]
+                team2 = g[index+2:]
+                if team1 in my_math and team2 in my_math and data[i+1] == right_date:
+                    self.second_task(element_quanity)
+                    ratio = self.third_task().split('\n')
+                    print(ratio)
+                    if math[1] in ratio[0]:
+                        ratios.append([math[1], ratio[1]])
+                        ratios.append([math[2], ratio[5]])
+                    else:
+                        ratios.append([math[1], ratio[5]])
+                        ratios.append([math[2], ratio[1]])
+                    self.__temp_data.temp_data(user_id)[user_id][4].append(ratios)
+                    self.__driver.close()
+                    return ratios
+
+            elif '.' in g:
+                element_quanity += 1
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet * ERROR'])
+        self.__driver.close()
+        return False
+
+    def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
-        time.sleep(10)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
+        time.sleep(5)
+        self.__driver.find_element(By.XPATH,
+                                   '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
         time.sleep(0.5)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
         time.sleep(1)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
+        self.__driver.find_element(By.XPATH,
+                                   '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
         time.sleep(1)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(name[0])
+        self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(f'{math[1]} - {math[2]}')
         time.sleep(3)
-        print(self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[3]/div[2]/div[1]/div/div[1]').text)
+        return self.__driver.find_element(By.XPATH,
+                                         '/html/body/application/div[3]/div[2]/div[3]/div[2]/div[1]/div/div[1]').text
+
+    def third_task(self):
+        time.sleep(5)
+        return self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div[1]').text
+
+    def second_task(self, index):
+        self.__driver.find_element(By.XPATH, f'/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]/div[2]/div[{index}]').click()
 
 
 class LigaStavok:
@@ -150,12 +204,9 @@ class LigaStavok:
         if day[0] == '0':
             day = day[1]
         right_date = f'{day} {self.__month[months]} {year}, {times}'
-        print(dates)
-        print(right_date)
         if right_date in dates:
             self.choose_match(dates.index(right_date)+1)
             ratio = self.get_ratio().split('\n')[1:7]
-            print(ratio)
             if math[1] in ratio[0]:
                 ratios.append([math[1], ratio[1]])
                 ratios.append([math[2], ratio[5]])
