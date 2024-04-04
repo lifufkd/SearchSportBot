@@ -2,6 +2,8 @@
 #            Created by             #
 #               SBR                 #
 #####################################
+import copy
+
 config_name = 'secrets.json'
 #####################################
 import os
@@ -12,7 +14,7 @@ import platform
 import threading
 from threading import Lock
 from datetime import datetime
-from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok
+from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, OlimpBet
 from frontend import Bot_inline_btns
 from backend import TempUserData, DbAct
 from db import DB
@@ -31,22 +33,32 @@ def schedule_worker():
         time.sleep(1)
 
 
-def waiter(user_id, s=''):
+def waiter(user_id, status, s=''):
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 2:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 4:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
-        s += f'{i[0]}{i[1][0]}({i[1][1]}) - {i[2][0]}({i[2][1]})\n'
+        if 'матч не найден' not in i[0]:
+            s += f'{i[0]}{i[1][0]}({i[1][1]}) - {i[2][0]}({i[2][1]}) - {i[3][0]}({i[3][1]}) источник:{i[1][2]}\n'
+        else:
+            s += f'{i[0]}\n'
+    temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
+    temp_user_data.temp_data(user_id)[user_id][0] = status
     bot.send_message(user_id, s)
 
 
 def get_all_ratio(user_id):
+    status = temp_user_data.temp_data(user_id)[user_id][0]
     selected_team = temp_user_data.temp_data(user_id)[user_id][3]
     sport = temp_user_data.temp_data(user_id)[user_id][1]
+    temp_user_data.temp_data(user_id)[user_id][0] = 2
+    bot.send_message(user_id, 'Выполняется поиск поиск матча на ТОП БК...')
     threading.Thread(target=LigaStavok, args=(selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=FonBet, args=(selected_team, temp_user_data, user_id)).start()
-    threading.Thread(target=waiter, args=(user_id, )).start()
+    threading.Thread(target=OlimpBet, args=(selected_team, temp_user_data, user_id)).start()
+    threading.Thread(target=Pari, args=(selected_team, temp_user_data, user_id)).start()
+    threading.Thread(target=waiter, args=(user_id, status)).start()
 
 
 def main():
