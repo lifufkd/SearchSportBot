@@ -9,6 +9,7 @@ import undetected_chromedriver as uc
 import time
 import sys
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -89,7 +90,7 @@ class UpdateMatches:
     def init(self):
         options = uc.ChromeOptions()
         options.add_argument('--headless=new')
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def get_content(self, date, sport):
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
@@ -98,7 +99,7 @@ class UpdateMatches:
 
 
 class Leon:
-    def __init__(self, math, temp_user_data, user_id):
+    def __init__(self, sport, math, temp_user_data, user_id):
         super(Leon, self).__init__()
         self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
                         '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
@@ -110,19 +111,19 @@ class Leon:
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(math, user_id)
+        self.parser(sport, math, user_id)
 
     def init(self):
         options = uc.ChromeOptions()
         options.add_argument('--headless=new')
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon * матч не найден'])
         self.__driver.quit()
         return False
 
-    def parser(self, math, user_id):
+    def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
             selector = 0
@@ -142,12 +143,14 @@ class Leon:
                     section += 1
                 elif ' - ' in g:
                     selector += 1
-                    if (math[1].lower() in g.lower() and math[2].lower() in g.lower()) and f'{data[i-2]} {data[i-1]}' == right_date:
+                    sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}', b=g.lower()).ratio()
+                    if sm >= 0.85 and f'{data[i - 2]} {data[i - 1]}' == right_date:
                         self.second_task(section, selector, one_line)
                         current_url = self.__driver.current_url
                         index = g.index('-')
                         team1 = g[:index-1]
-                        ratio = self.third_task().split('\n')
+                        ratio = self.third_task(sport).split('\n')
+                        print(ratio)
                         if math[1].lower() in team1.lower():
                             ratios.append([math[1], ratio[1], current_url])
                             ratios.append(['ничья', ratio[3], current_url])
@@ -156,6 +159,7 @@ class Leon:
                             ratios.append([math[1], ratio[5], current_url])
                             ratios.append(['ничья', ratio[3], current_url])
                             ratios.append([math[2], ratio[1], current_url])
+
                         self.__temp_data.temp_data(user_id)[user_id][4].append(ratios)
                         self.__driver.quit()
                         return ratios
@@ -166,7 +170,7 @@ class Leon:
 
     def get_data(self, metch):
         self.__driver.get('https://leon.ru/')
-        time.sleep(10)
+        time.sleep(2)
         self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(
@@ -179,9 +183,17 @@ class Leon:
         data = self.__driver.find_element(By.XPATH, '/html/body/div[3]/div/div/div/div[2]/div/div[1]/div').text
         return data
 
-    def third_task(self):
+    def third_task(self, sport):
         time.sleep(3)
-        return self.__driver.find_element(By.XPATH,
+        match sport:
+            case 'football':
+                return self.__driver.find_element(By.XPATH,
+                                                  '/html/body/div[2]/section/div/main/div[2]/div[3]/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[3]').text
+            case 'basketball':
+                return self.__driver.find_element(By.XPATH,
+                                                  '/html/body/div[2]/section/div/main/div[2]/div[3]/div/div/div[1]/div[4]/div[2]/div[1]/section[1]/article/div[2]/div').text
+            case 'hockey':
+                return self.__driver.find_element(By.XPATH,
                                           '/html/body/div[2]/section/div/main/div[2]/div[3]/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[3]').text
 
     def second_task(self, section, index, one_line):
@@ -212,7 +224,7 @@ class OlimpBet:
     def init(self):
         options = uc.ChromeOptions()
         options.add_argument('--headless=new')
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet * матч не найден'])
@@ -241,7 +253,9 @@ class OlimpBet:
                 if ' - ' in g:
                     team1 = data[i-1]
                     team2 = data[i+1]
-                    if (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()) and data[i + 2] == right_date:
+                    sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
+                                         b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    if sm >= 0.85 and data[i + 2] == right_date:
                         current_url = self.__driver.current_url
                         if sport != 'hockey':
                             ratio1 = data[i+3]
@@ -311,7 +325,7 @@ class Pari:
     def init(self):
         options = uc.ChromeOptions()
         options.add_argument('--headless=new')
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari * матч не найден'])
@@ -436,7 +450,7 @@ class FonBet:
     def init(self):
         options = uc.ChromeOptions()
         options.add_argument('--headless=new')
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet * матч не найден'])
@@ -551,7 +565,7 @@ class LigaStavok:
     def init(self):
         options = uc.ChromeOptions()
         options.add_argument('--headless=new')
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок * матч не найден'])
