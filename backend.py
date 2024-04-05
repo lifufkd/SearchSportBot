@@ -5,6 +5,7 @@
 #####################################
 import os
 import time
+from datetime import datetime
 import pandas as pd
 #####################################
 
@@ -63,10 +64,10 @@ class DbAct:
         return self.__db.db_read(f'SELECT MAX(date) FROM "{sport}"', ())[0][0]
 
     def get_team_matches(self, sport, team):
-        return self.__db.db_read(f'SELECT date, first_team, second_team FROM "{sport}" WHERE first_team LIKE lower("%{team}%") OR second_team LIKE lower("%{team}%") ORDER BY date ASC LIMIT 5 COLLATE NOCASE', ())
+        return self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE LOWER(`first_team`) LIKE LOWER("%{team}%") OR LOWER(`second_team`) LIKE lower("%{team}%") AND `date` >= "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC LIMIT 5', ())
 
     def get_team_matches_strict(self, sport, team):
-        return self.__db.db_read(f'SELECT date, first_team, second_team FROM "{sport}" WHERE first_team = "{team}" OR second_team = "{team}" ORDER BY date ASC LIMIT 5', ())
+        return self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE `first_team` = "{team}" OR `second_team` = "{team}" AND `date` >= "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC LIMIT 5', ())
 
 
     def db_export_xlsx(self):

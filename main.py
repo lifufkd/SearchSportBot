@@ -13,8 +13,10 @@ import time
 import platform
 import threading
 from threading import Lock
+from os import listdir
+from os.path import isfile, join
 from datetime import datetime
-from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, OlimpBet
+from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, OlimpBet, Leon
 from frontend import Bot_inline_btns
 from backend import TempUserData, DbAct
 from db import DB
@@ -33,9 +35,22 @@ def schedule_worker():
         time.sleep(1)
 
 
+def cleaner():
+    if platform.system() == 'Windows':
+        path = f"{os.getenv('APPDATA')}\\undetected_chromedriver"
+    else:
+        path = f"{os.getenv('APPDATA')}\\"
+    for f in listdir(path):
+        if isfile(f'{path}\\{f}'):
+            try:
+                os.remove(f'{path}\\{f}')
+            except:
+                pass
+
+
 def waiter(user_id, status, s=''):
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 4:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 5:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
@@ -45,6 +60,7 @@ def waiter(user_id, status, s=''):
             s += f'{i[0]}\n'
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
     temp_user_data.temp_data(user_id)[user_id][0] = status
+    cleaner()
     bot.send_message(user_id, s)
 
 
@@ -54,10 +70,11 @@ def get_all_ratio(user_id):
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
     bot.send_message(user_id, 'Выполняется поиск поиск матча на ТОП БК...')
-    threading.Thread(target=LigaStavok, args=(selected_team, temp_user_data, user_id)).start()
-    threading.Thread(target=FonBet, args=(selected_team, temp_user_data, user_id)).start()
-    threading.Thread(target=OlimpBet, args=(selected_team, temp_user_data, user_id)).start()
-    threading.Thread(target=Pari, args=(selected_team, temp_user_data, user_id)).start()
+    threading.Thread(target=LigaStavok, args=(selected_team, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
+    threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
+    threading.Thread(target=Leon, args=(selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, status)).start()
 
 
@@ -114,6 +131,7 @@ def main():
                 case 0:
                     if user_input is not None:
                         strict_data = db_actions.get_team_matches_strict(temp_user_data.temp_data(user_id)[user_id][1], user_input)
+                        print(strict_data)
                         if len(strict_data) > 0:
                             if len(strict_data) == 1:
                                 temp_user_data.temp_data(user_id)[user_id][0] = None
@@ -125,7 +143,8 @@ def main():
                                 bot.send_message(user_id, f'Для этой команды нашлось {len(strict_data)} матча: ',
                                                  reply_markup=buttons.games_btns(strict_data))
                         else:
-                            full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input.lower())
+                            full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
+                            print(full_data)
                             if len(full_data) > 0:
                                 if len(full_data) == 1:
                                     temp_user_data.temp_data(user_id)[user_id][0] = None

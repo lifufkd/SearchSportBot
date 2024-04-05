@@ -16,14 +16,6 @@ class DB:
         self.__db = None
         self.init()
 
-    def sqlite_lower(self, value_):
-        return value_.lower()
-
-        # Переопределение функции преобразования к верхнему геристру
-
-    def sqlite_upper(self, value_):
-        return value_.upper()
-
     # Переопределение правила сравнения строк
     def ignore_case_collation(self, value1_, value2_):
         if value1_.lower() == value2_.lower():
