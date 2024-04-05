@@ -50,7 +50,7 @@ def cleaner():
 
 def waiter(user_id, status, s=''):
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 5:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 1:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
@@ -71,10 +71,10 @@ def get_all_ratio(user_id):
     temp_user_data.temp_data(user_id)[user_id][0] = 2
     bot.send_message(user_id, 'Выполняется поиск поиск матча на ТОП БК...')
     threading.Thread(target=LigaStavok, args=(selected_team, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
-    threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
-    threading.Thread(target=Leon, args=(selected_team, temp_user_data, user_id)).start()
+    #threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
+    #threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
+    #threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
+    #threading.Thread(target=Leon, args=(selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, status)).start()
 
 
