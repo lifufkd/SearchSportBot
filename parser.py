@@ -68,8 +68,7 @@ class UpdateMatches:
                         datetime_with_time = datetime.combine(start_date, datetime.min.time()) + timedelta(hours=hours, minutes=minutes)
                         self.__db_acts.update_sport(sport, [datetime_with_time, array_games_data[index + 2], array_games_data[index + 4]])
                 except Exception as e:
-                    print(e)
-            print(cleaned_games)
+                    pass
 
     def updater(self, sport):
         start_date = datetime.now().date()
@@ -86,14 +85,14 @@ class UpdateMatches:
                 else:
                     self.main_script(formatted_date, sport, start_date)
             except Exception as e:
-                print(e)
+
                 self.main_script(formatted_date, sport, start_date)
             start_date += timedelta(days=1)
 
     def init(self):
         options = Options()
         options.add_argument('--start-maximized')
-        self.__driver = webdriver.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def get_content(self, date, sport):
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
@@ -119,7 +118,7 @@ class Leon:
     def init(self):
         options = Options()
         options.add_argument('--start-maximized')
-        self.__driver = webdriver.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден'])
@@ -129,7 +128,6 @@ class Leon:
     def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
-            print(data)
             selector = 0
             section = 1
             ratios = ['Leon: ']
@@ -148,13 +146,14 @@ class Leon:
                 elif ' - ' in g:
                     selector += 1
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}', b=g.lower()).ratio()
+                    print(sm, 'leon')
+                    print(f"s date {f'{data[i - 2]}'} true date {right_date}", 'leon')
                     if sm >= 0.75 and f'{data[i - 2]}' == right_date:
                         self.second_task(section, selector, one_line)
                         current_url = self.__driver.current_url
                         index = g.index('-')
                         team1 = g[:index-1]
                         ratio = self.third_task(sport).split('\n')
-                        print(ratio)
                         if math[1].lower() in team1.lower():
                             ratios.append([math[1], ratio[1], current_url])
                             ratios.append(['ничья', ratio[3], current_url])
@@ -169,7 +168,6 @@ class Leon:
                         return ratios
             self.error_parse(user_id)
         except Exception as e:
-            print(e)
             self.error_parse(user_id)
 
     def get_data(self, metch):
@@ -228,7 +226,7 @@ class OlimpBet:
     def init(self):
         options = Options()
         options.add_argument('--start-maximized')
-        self.__driver = webdriver.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден'])
@@ -259,6 +257,8 @@ class OlimpBet:
                     team2 = data[i+1]
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    print(sm, 'OlimpBet')
+                    print(f"s date {f'{data[i + 2][:-6]}'} true date {right_date}", 'OlimpBet')
                     if sm >= 0.75 and data[i + 2][:-6] == right_date:
                         current_url = self.__driver.current_url
                         if sport != 'hockey':
@@ -282,7 +282,6 @@ class OlimpBet:
                         return ratios
             self.error_parse(user_id)
         except Exception as e:
-            print(e)
             self.error_parse(user_id)
 
     def get_data(self, metch):
@@ -329,7 +328,7 @@ class Pari:
     def init(self):
         options = Options()
         options.add_argument('--start-maximized')
-        self.__driver = webdriver.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден'])
@@ -362,6 +361,8 @@ class Pari:
                     team2 = g[index + 2:]
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    print(sm, 'Pari')
+                    print(f"s date {f'{data[i + 2][:-8]}'} true date {right_date}", 'Pari')
                     if sm >= 0.75 and data[i + 1][:-8] == right_date:
                         for k in range(10):
                             try:
@@ -399,7 +400,6 @@ class Pari:
                 element_quanity += 1
             self.error_parse(user_id)
         except Exception as e:
-            print(e)
             self.error_parse(user_id)
 
 
@@ -456,7 +456,7 @@ class FonBet:
     def init(self):
         options = Options()
         options.add_argument('--start-maximized')
-        self.__driver = webdriver.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден'])
@@ -489,6 +489,8 @@ class FonBet:
                     team2 = g[index + 2:]
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    print(sm, 'fonbet')
+                    print(f"s date {f'{data[i + 1][:-8]}'} true date {right_date}", 'fonbet')
                     if sm >= 0.75 and data[i + 1][:-8] == right_date:
                         self.second_task(element_quanity)
                         current_url = self.__driver.current_url
@@ -517,7 +519,6 @@ class FonBet:
                 element_quanity += 1
             self.error_parse(user_id)
         except Exception as e:
-            print(e)
             self.error_parse(user_id)
 
 
@@ -572,7 +573,7 @@ class LigaStavok:
     def init(self):
         options = Options()
         options.add_argument('--start-maximized')
-        self.__driver = webdriver.Chrome(options=options)
+        self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден'])
@@ -593,10 +594,10 @@ class LigaStavok:
             if day[0] == '0':
                 day = day[1]
             right_date = f'{day} {self.__month[months]} {year}, {times}'
+            print(f'true date {right_date}', 'liga')
             if right_date in dates:
                 self.choose_match(dates.index(right_date) + 1)
                 ratio = self.get_ratio().split('\n')[0:7]
-                print(ratio)
                 current_url = self.__driver.current_url
                 if math[1].lower() in ratio[0].lower():
                     ratios.append([math[1], ratio[1], current_url])
@@ -613,7 +614,6 @@ class LigaStavok:
             else:
                 self.error_parse(user_id)
         except Exception as e:
-            print(e)
             self.error_parse(user_id)
 
 
