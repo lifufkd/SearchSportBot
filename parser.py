@@ -133,7 +133,7 @@ class Leon:
             months = math[0][5:7]
             day = math[0][8:10]
             times = math[0][11:16]
-            right_date = f'{day}.{months} {times}'
+            right_date = f'{day}.{months}'
             if 'Линия' in data[0]:
                 one_line = True
             else:
@@ -145,9 +145,7 @@ class Leon:
                 elif ' - ' in g:
                     selector += 1
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}', b=g.lower()).ratio()
-                    print(sm)
-                    print(f'{data[i - 2]} {data[i - 1]}')
-                    if sm >= 0.8 and f'{data[i - 2]} {data[i - 1]}' == right_date:
+                    if sm >= 0.75 and f'{data[i - 2]}' == right_date:
                         self.second_task(section, selector, one_line)
                         current_url = self.__driver.current_url
                         index = g.index('-')
@@ -231,6 +229,7 @@ class OlimpBet:
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден'])
+        time.sleep(1111)
         self.__driver.quit()
         return False
 
@@ -246,19 +245,21 @@ class OlimpBet:
                 day = day[1]
             if datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
                 day = 'Сегодня'
-                right_date = f'{day} {times}'
+                right_date = f'{day}'
             elif datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == (datetime.now()+timedelta(days=1)).date():
                 day = 'Завтра'
-                right_date = f'{day} {times}'
+                right_date = f'{day}'
             else:
-                right_date = f'{day}.{months}.{year} {times}'
+                right_date = f'{day}.{months}.{year}'
             for i, g in enumerate(data):
                 if ' - ' in g:
                     team1 = data[i-1]
                     team2 = data[i+1]
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
-                    if sm >= 0.85 and data[i + 2] == right_date:
+                    print(sm)
+                    print(data[i + 2][:-6])
+                    if sm >= 0.75 and data[i + 2][:-6] == right_date:
                         current_url = self.__driver.current_url
                         if sport != 'hockey':
                             ratio1 = data[i+3]

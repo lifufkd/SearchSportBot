@@ -79,9 +79,9 @@ def get_all_ratio(user_id):
     bot.send_message(user_id, 'Ищу лучшие кэфы')
     #threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
     #threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
-    #threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
     #threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
-    threading.Thread(target=Leon, args=(sport, selected_team, temp_user_data, user_id)).start()
+    #threading.Thread(target=Leon, args=(sport, selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, status)).start()
 
 
