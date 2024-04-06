@@ -10,6 +10,8 @@ import time
 import sys
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -89,9 +91,9 @@ class UpdateMatches:
             start_date += timedelta(days=1)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless=new')
-        self.__driver = uc.Chrome()
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = webdriver.Chrome(options=options)
 
     def get_content(self, date, sport):
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
@@ -115,9 +117,9 @@ class Leon:
         self.parser(sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless=new')
-        self.__driver = uc.Chrome()
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = webdriver.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден'])
@@ -224,9 +226,9 @@ class OlimpBet:
         self.parser(sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless=new')
-        self.__driver = uc.Chrome()
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = webdriver.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден'])
@@ -325,9 +327,9 @@ class Pari:
         self.parser(sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless=new')
-        self.__driver = uc.Chrome()
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = webdriver.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден'])
@@ -452,9 +454,9 @@ class FonBet:
         self.parser(sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless=new')
-        self.__driver = uc.Chrome()
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = webdriver.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден'])
@@ -556,7 +558,7 @@ class FonBet:
 
 
 class LigaStavok:
-    def __init__(self, math, temp_user_data, user_id):
+    def __init__(self, sport, math, temp_user_data, user_id):
         super(LigaStavok, self).__init__()
         self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
                         '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
@@ -565,19 +567,19 @@ class LigaStavok:
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(math, user_id)
+        self.parser(sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless=new')
-        self.__driver = uc.Chrome()
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = webdriver.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден'])
         self.__driver.quit()
         return False
 
-    def parser(self, math, user_id):
+    def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
             dates = list()
