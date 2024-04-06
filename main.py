@@ -29,6 +29,13 @@ def sync_db():
             threading.Thread(target=UpdateMatches, args=(db_actions, sport)).start()
 
 
+def matches(data):
+    s = ''
+    for i, g in enumerate(data):
+        s += f'{i+1}. {g[1]} - {g[2]} {g[0][:-3]}\n'
+    return s
+
+
 def schedule_worker():
     while True:
         schedule.run_pending()
@@ -55,7 +62,7 @@ def waiter(user_id, status, s=''):
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
         if 'матч не найден' not in i[0]:
-            s += f'{i[0]}{i[1][0]}({i[1][1]}) - {i[2][0]}({i[2][1]}) - {i[3][0]}({i[3][1]}) источник:{i[1][2]}\n'
+            s += f'{i[0]}{i[1][0]} {i[1][1]} | {i[2][0]} {i[2][1]} | {i[3][0]} {i[3][1]} источник:{i[1][2]}\n'
         else:
             s += f'{i[0]}\n'
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
@@ -69,7 +76,7 @@ def get_all_ratio(user_id):
     selected_team = temp_user_data.temp_data(user_id)[user_id][3]
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
-    bot.send_message(user_id, 'Выполняется поиск поиск матча на ТОП БК...')
+    bot.send_message(user_id, 'Ищу лучшие кэфы')
     #threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
     #threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
     #threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
@@ -88,10 +95,20 @@ def main():
         db_actions.add_user(user_id, message.from_user.first_name, message.from_user.last_name,
                             f'@{message.from_user.username}')
         if command == 'start':
-            bot.send_message(message.chat.id, 'Сравни кэфы БК, чтобы ставочка зашла выгоднее\nНапиши название команды из'
-                                              ' хоккея, футбола или баскетбола, а я выдам коэффициенты среди топовых БК\n* '
-                                              'Pari\n* BetBoom\n* БэтСити\n* FonBet\n* Leon\n* Winline\n* OlimpBet\n* Лига ставок',
-                             reply_markup=buttons.start_btns(), parse_mode="HTML")
+            bot.send_message(message.chat.id, 'Я — ваш помощник в мире ставок на спорт Помогу найти самые выгодные '
+                                              'коэффициенты среди лучших букмекерских компаний Всё, что вам нужно сделать'
+                                              ' — это выбрать вид спорта, написать команду, на которую хотите поставить, '
+                                              'и выбрать интересующий вас матч из списка Я выдам вам коэффициенты на этот '
+                                              'матч по разным БК, чтобы вы могли сделать самую выгодную ставкуЯ — '
+                                              'ваш помощник в мире ставок на спорт Помогу найти самые выгодные коэффициенты '
+                                              'среди лучших букмекерских компаний Всё, что вам нужно сделать — это выбрать '
+                                              'вид спорта, написать команду, на которую хотите поставить, и выбрать '
+                                              'интересующий вас матч из списка Я выдам вам коэффициенты на этот матч по '
+                                              'разным БК, чтобы вы могли сделать самую выгодную ставку '
+                                              'Вот по каким букмекерам я могу искать:\n[Фонбэт](https://www.fon.bet/)\n'
+                                              '[Лига ставок](https://www.ligastavok.ru/)\n[Olimpbet](https://www.olimp.bet/)\n'
+                                              '[Pari](https://www.pari.ru/)\n[Леон](https://leon.ru/)',
+                             reply_markup=buttons.start_btns(), parse_mode='MarkdownV2')
         elif db_actions.user_is_admin(user_id):
             if command == 'admin':
                 bot.send_message(message.chat.id, f'{message.from_user.first_name}, вы успешно вошли в Админ-Панель ✅',
@@ -109,7 +126,7 @@ def main():
                 temp_user_data.temp_data(user_id)[user_id][0] = 0
                 temp_user_data.temp_data(user_id)[user_id][1] = command[5:]
                 print(temp_user_data.temp_data(user_id)[user_id][1])
-                bot.send_message(user_id, 'Напиши название команды')
+                bot.send_message(user_id, 'Напишите название команды')
             elif command[:4] == 'game' and code == 1:
                 temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
                 get_all_ratio(user_id)
@@ -140,8 +157,9 @@ def main():
                             else:
                                 temp_user_data.temp_data(user_id)[user_id][2] = strict_data
                                 temp_user_data.temp_data(user_id)[user_id][0] = 1
-                                bot.send_message(user_id, f'Для этой команды нашлось {len(strict_data)} матча: ',
-                                                 reply_markup=buttons.games_btns(strict_data))
+                                s = matches(strict_data)
+                                bot.send_message(user_id, f'Для этой команды нашлось {len(strict_data)} матчей: \n{s}',
+                                                 reply_markup=buttons.games_btns(len(strict_data)))
                         else:
                             full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
                             print(full_data)
@@ -153,10 +171,11 @@ def main():
                                 else:
                                     temp_user_data.temp_data(user_id)[user_id][2] = full_data
                                     temp_user_data.temp_data(user_id)[user_id][0] = 1
-                                    bot.send_message(user_id, 'По твоему запросу нашлось больше одной команды: ',
-                                                     reply_markup=buttons.games_btns(full_data))
+                                    s = matches(full_data)
+                                    bot.send_message(user_id, f'Для этой команды нашлось {len(full_data)} матчей: \n{s}',
+                                                     reply_markup=buttons.games_btns(len(full_data)))
                             else:
-                                bot.send_message(user_id, 'По твоему запросу не нашлось команд, попробуй ещё раз')
+                                bot.send_message(user_id, 'Попробуйте написать по другому: не нашел команду :(')
                     else:
                         bot.send_message(user_id, 'Это не текст!')
 

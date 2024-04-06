@@ -119,16 +119,17 @@ class Leon:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon * матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден'])
         self.__driver.quit()
         return False
 
     def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
+            print(data)
             selector = 0
             section = 1
-            ratios = ['Leon * ']
+            ratios = ['Leon: ']
             months = math[0][5:7]
             day = math[0][8:10]
             times = math[0][11:16]
@@ -144,7 +145,9 @@ class Leon:
                 elif ' - ' in g:
                     selector += 1
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}', b=g.lower()).ratio()
-                    if sm >= 0.85 and f'{data[i - 2]} {data[i - 1]}' == right_date:
+                    print(sm)
+                    print(f'{data[i - 2]} {data[i - 1]}')
+                    if sm >= 0.8 and f'{data[i - 2]} {data[i - 1]}' == right_date:
                         self.second_task(section, selector, one_line)
                         current_url = self.__driver.current_url
                         index = g.index('-')
@@ -227,14 +230,14 @@ class OlimpBet:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet * матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден'])
         self.__driver.quit()
         return False
 
     def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
-            ratios = ['OlimpBet * ']
+            ratios = ['OlimpBet: ']
             year = math[0][:4]
             months = math[0][5:7]
             day = math[0][8:10]
@@ -328,14 +331,14 @@ class Pari:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari * матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден'])
         self.__driver.quit()
         return False
 
     def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
-            ratios = ['Pari * ']
+            ratios = ['Pari: ']
             flag = False
             element_quanity = 0
             months = math[0][5:7]
@@ -453,13 +456,13 @@ class FonBet:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet * матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден'])
         self.__driver.quit()
         return False
 
     def parser(self, sport, math, user_id):
         try:
-            ratios = ['FonBet * ']
+            ratios = ['FonBet: ']
             data = self.get_data(math).split('\n')
             element_quanity = 0
             months = math[0][5:7]
@@ -568,7 +571,7 @@ class LigaStavok:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок * матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден'])
         self.__driver.quit()
         return False
 
@@ -576,7 +579,7 @@ class LigaStavok:
         try:
             data = self.get_data(math).split('\n')
             dates = list()
-            ratios = ['Лига ставок * ']
+            ratios = ['Лига ставок: ']
             for i in range(2, len(data), 3):
                 dates.append(data[i - 1])
             year = math[0][:4]

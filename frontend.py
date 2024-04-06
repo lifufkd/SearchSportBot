@@ -15,9 +15,9 @@ class Bot_inline_btns:
         self.__markup = types.InlineKeyboardMarkup(row_width=1)
 
     def start_btns(self):
-        assortiment = types.InlineKeyboardButton('Футбол', callback_data='sportfootball')
-        cart = types.InlineKeyboardButton('Хоккей', callback_data='sporthockey')
-        bonus = types.InlineKeyboardButton('Баскетбол', callback_data='sportbasketball')
+        assortiment = types.InlineKeyboardButton('Футбол ⚽️', callback_data='sportfootball')
+        cart = types.InlineKeyboardButton('Хоккей🏒 ', callback_data='sporthockey')
+        bonus = types.InlineKeyboardButton('Баскетбол 🏀', callback_data='sportbasketball')
         self.__markup.add(assortiment, cart, bonus)
         return self.__markup
 
@@ -28,8 +28,7 @@ class Bot_inline_btns:
 
     def games_btns(self, games):
         markup = types.InlineKeyboardMarkup(row_width=1)
-        for i, g in enumerate(games):
-            print(g)
-            btn = types.InlineKeyboardButton(f'{g[1]} - {g[2]} * {g[0] }', callback_data=f'game{i}')
+        for i in range(games):
+            btn = types.InlineKeyboardButton(f'{i+1}', callback_data=f'game{i}')
             markup.add(btn)
         return markup
