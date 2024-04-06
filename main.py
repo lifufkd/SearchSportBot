@@ -32,7 +32,11 @@ def sync_db():
 def matches(data):
     s = ''
     for i, g in enumerate(data):
-        s += f'{i+1}. {g[1]} - {g[2]} {g[0][:-3]}\n'
+        year = g[0][2:4]
+        months = g[0][5:7]
+        day = g[0][8:10]
+        times = g[0][11:16]
+        s += f'{i+1}. {g[1]} - {g[2]} {f"{day}.{months}.{year} {times}"}\n'
     return s
 
 
@@ -57,18 +61,18 @@ def cleaner():
 
 def waiter(user_id, status, s=''):
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 5:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 1:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
         if 'матч не найден' not in i[0]:
-            s += f'{i[0]}{i[1][0]} {i[1][1]} | {i[2][0]} {i[2][1]} | {i[3][0]} {i[3][1]} источник:{i[1][2]}\n'
+            s += f'<a href="{i[1][2]}">{i[0]}{i[1][0]} {i[1][1]} | {i[2][0]} {i[2][1]} | {i[3][0]} {i[3][1]}</a>\n'
         else:
             s += f'{i[0]}\n'
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
     temp_user_data.temp_data(user_id)[user_id][0] = status
     cleaner()
-    bot.send_message(user_id, s)
+    bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
 
 
 def get_all_ratio(user_id):
@@ -77,10 +81,10 @@ def get_all_ratio(user_id):
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
     bot.send_message(user_id, 'Ищу лучшие кэфы')
-    threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
-    threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
+    #threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
+    #threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
+    #threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
+    #threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
     threading.Thread(target=Leon, args=(sport, selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, status)).start()
 
@@ -148,7 +152,6 @@ def main():
                 case 0:
                     if user_input is not None:
                         strict_data = db_actions.get_team_matches_strict(temp_user_data.temp_data(user_id)[user_id][1], user_input)
-                        print(strict_data)
                         if len(strict_data) > 0:
                             if len(strict_data) == 1:
                                 temp_user_data.temp_data(user_id)[user_id][0] = None
@@ -162,7 +165,6 @@ def main():
                                                  reply_markup=buttons.games_btns(len(strict_data)))
                         else:
                             full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
-                            print(full_data)
                             if len(full_data) > 0:
                                 if len(full_data) == 1:
                                     temp_user_data.temp_data(user_id)[user_id][0] = None

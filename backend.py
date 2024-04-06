@@ -5,6 +5,7 @@
 #####################################
 import os
 import time
+from difflib import SequenceMatcher
 from datetime import datetime
 import pandas as pd
 #####################################
@@ -69,10 +70,28 @@ class DbAct:
         self.__db.db_write('DELETE * FROM hockey', ())
 
     def get_team_matches(self, sport, team):
-        return self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE (LOWER(`first_team`) LIKE LOWER("%{team}%") OR LOWER(`second_team`) LIKE lower("%{team}%")) AND `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC LIMIT 5', ())
+        result = list()
+        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC', ())
+        for element in data:
+            sm1 = SequenceMatcher(a=element[1].lower(),
+                                 b=team.lower()).ratio()
+            sm2 = SequenceMatcher(a=element[2].lower(),
+                                  b=team.lower()).ratio()
+            if len(result) >= 5:
+                break
+            elif sm1 >= 0.8 or sm2 >= 0.8:
+                result.append(element)
+        return result
 
     def get_team_matches_strict(self, sport, team):
-        return self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE (`first_team` = "{team}" OR `second_team` = "{team}") AND `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC LIMIT 5', ())
+        result = list()
+        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC', ())
+        for element in data:
+            if len(result) >= 5:
+                break
+            elif element[1].lower() == team.lower() or element[2].lower() == team.lower():
+                result.append(element)
+        return result
 
 
     def db_export_xlsx(self):
