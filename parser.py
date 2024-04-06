@@ -85,7 +85,7 @@ class UpdateMatches:
                 else:
                     self.main_script(formatted_date, sport, start_date)
             except Exception as e:
-
+                print(e)
                 self.main_script(formatted_date, sport, start_date)
             start_date += timedelta(days=1)
 
@@ -148,7 +148,7 @@ class Leon:
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}', b=g.lower()).ratio()
                     print(sm, 'leon')
                     print(f"s date {f'{data[i - 2]}'} true date {right_date}", 'leon')
-                    if sm >= 0.75 and f'{data[i - 2]}' == right_date:
+                    if (sm >= 0.75 or (math[1].lower() in g.lower() and math[2].lower() in g.lower())) and f'{data[i - 2]}' == right_date:
                         self.second_task(section, selector, one_line)
                         current_url = self.__driver.current_url
                         index = g.index('-')
@@ -168,6 +168,7 @@ class Leon:
                         return ratios
             self.error_parse(user_id)
         except Exception as e:
+            print(e)
             self.error_parse(user_id)
 
     def get_data(self, metch):
@@ -259,7 +260,9 @@ class OlimpBet:
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
                     print(sm, 'OlimpBet')
                     print(f"s date {f'{data[i + 2][:-6]}'} true date {right_date}", 'OlimpBet')
-                    if sm >= 0.75 and data[i + 2][:-6] == right_date:
+                    if ((sm >= 0.75 or (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and
+                        (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()))
+                            and data[i + 2][:-6] == right_date):
                         current_url = self.__driver.current_url
                         if sport != 'hockey':
                             ratio1 = data[i+3]
@@ -282,6 +285,7 @@ class OlimpBet:
                         return ratios
             self.error_parse(user_id)
         except Exception as e:
+            print(e)
             self.error_parse(user_id)
 
     def get_data(self, metch):
@@ -362,8 +366,10 @@ class Pari:
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
                     print(sm, 'Pari')
-                    print(f"s date {f'{data[i + 2][:-8]}'} true date {right_date}", 'Pari')
-                    if sm >= 0.75 and data[i + 1][:-8] == right_date:
+                    print(f"s date {f'{data[i + 1][:-8]}'} true date {right_date}", 'Pari')
+                    if ((sm >= 0.75 or (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and
+                        (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()))
+                            and data[i + 1][:-8] == right_date):
                         for k in range(10):
                             try:
                                 self.second_task(k, element_quanity)
@@ -374,6 +380,7 @@ class Pari:
                         if flag:
                             current_url = self.__driver.current_url
                             ratio = self.third_task(sport).split('\n')
+                            print(ratio)
                             if sport != 'basketball':
                                 if math[1].lower() in ratio[0].lower():
                                     ratios.append([math[1], ratio[1], current_url])
@@ -400,7 +407,9 @@ class Pari:
                 element_quanity += 1
             self.error_parse(user_id)
         except Exception as e:
+            print(e)
             self.error_parse(user_id)
+
 
 
     def get_data(self, metch):
@@ -412,9 +421,9 @@ class Pari:
             EC.presence_of_element_located(
                 (By.XPATH, '/html/body/div[1]/div[2]/header/div[2]/div/div[2]/a')))
         element.click()
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH, '/html/body/div[5]/div/div/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(3)
+        time.sleep(5)
         search_place = self.__driver.find_element(By.XPATH, '//*[@id="search-container"]')
         data = search_place.text
         return data
@@ -491,7 +500,9 @@ class FonBet:
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
                     print(sm, 'fonbet')
                     print(f"s date {f'{data[i + 1][:-8]}'} true date {right_date}", 'fonbet')
-                    if sm >= 0.75 and data[i + 1][:-8] == right_date:
+                    if ((sm >= 0.75 or (math[1].lower() in team1.lower() or math[1].lower() in team2.lower())
+                        and (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()))
+                            and data[i + 1][:-8] == right_date):
                         self.second_task(element_quanity)
                         current_url = self.__driver.current_url
                         ratio = self.third_task(sport).split('\n')
@@ -519,6 +530,7 @@ class FonBet:
                 element_quanity += 1
             self.error_parse(user_id)
         except Exception as e:
+            print(e)
             self.error_parse(user_id)
 
 
@@ -583,6 +595,7 @@ class LigaStavok:
     def parser(self, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
+            print(data)
             dates = list()
             ratios = ['Лига ставок: ']
             for i in range(2, len(data), 3):
@@ -614,6 +627,7 @@ class LigaStavok:
             else:
                 self.error_parse(user_id)
         except Exception as e:
+            print(e)
             self.error_parse(user_id)
 
 

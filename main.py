@@ -66,7 +66,7 @@ def waiter(user_id, status, s=''):
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
         if 'матч не найден' not in i[0]:
-            s += f'<a href="{i[1][2]}">{i[0]}{i[1][0]} {i[1][1]} | {i[2][0]} {i[2][1]} | {i[3][0]} {i[3][1]}</a>\n'
+            s += f'<a href="{i[1][2]}">{i[0]}{i[1][0]} <b>{i[1][1]}</b> | {i[2][0]} <b>{i[2][1]}</b> | {i[3][0]} <b>{i[3][1]}</b></a>\n'
         else:
             s += f'{i[0]}\n'
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
@@ -75,8 +75,8 @@ def waiter(user_id, status, s=''):
     bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
     if 'матч не найден' in s:
         temp_user_data.temp_data(user_id)[user_id][0] = 3
-        bot.send_message(user_id, 'Не все кэфы нашлись? Напишите название матча в формате ("Локомотив - ЦСКА"), '
-                                  'результат будет лучше!')
+        bot.send_message(user_id, 'Не все кэфы нашлись? Напишите название матча в формате <b>"Локомотив - ЦСКА"</b>, '
+                                  'результат будет лучше!', parse_mode='html')
 
 
 
