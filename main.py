@@ -73,6 +73,11 @@ def waiter(user_id, status, s=''):
     temp_user_data.temp_data(user_id)[user_id][0] = status
     cleaner()
     bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
+    if 'матч не найден' in s:
+        temp_user_data.temp_data(user_id)[user_id][0] = 3
+        bot.send_message(user_id, 'Не все кэфы нашлись? Напишите название матча в формате ("Локомотив - ЦСКА"), '
+                                  'результат будет лучше!')
+
 
 
 def get_all_ratio(user_id):
@@ -178,6 +183,20 @@ def main():
                                                      reply_markup=buttons.games_btns(len(full_data)))
                             else:
                                 bot.send_message(user_id, 'Попробуйте написать по другому: не нашел команду :(')
+                    else:
+                        bot.send_message(user_id, 'Это не текст!')
+                case 3:
+                    if user_input is not None:
+                        if '-' in user_input:
+                            index = user_input.index('-')
+                            team1 = user_input[:index]
+                            team2 = user_input[index+1:]
+                            date = temp_user_data.temp_data(user_id)[user_id][3][0]
+                            temp_user_data.temp_data(user_id)[user_id][3] = [date, team1, team2]
+                            temp_user_data.temp_data(user_id)[user_id][0] = None
+                            get_all_ratio(user_id)
+                        else:
+                            bot.send_message(user_id, 'Без знака "-" я не понимаю как отличить 2 команды. Напишите ещё раз')
                     else:
                         bot.send_message(user_id, 'Это не текст!')
 
