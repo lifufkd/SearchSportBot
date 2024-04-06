@@ -24,7 +24,7 @@ from db import DB
 
 
 def sync_db():
-    if datetime.now().month == 1 and datetime.now().day == 1:
+    if datetime.now().month == 1 and datetime.now().day == 1 or config.get_config()['update_every_day']:
         for sport in ['football', 'hockey', 'basketball']:
             threading.Thread(target=UpdateMatches, args=(db_actions, sport)).start()
 
@@ -57,7 +57,7 @@ def cleaner():
 
 def waiter(user_id, status, s=''):
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 1:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 5:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
@@ -77,11 +77,11 @@ def get_all_ratio(user_id):
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
     bot.send_message(user_id, 'Ищу лучшие кэфы')
-    #threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    #threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
+    threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
     threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    #threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
-    #threading.Thread(target=Leon, args=(sport, selected_team, temp_user_data, user_id)).start()
+    threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
+    threading.Thread(target=Leon, args=(sport, selected_team, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, status)).start()
 
 

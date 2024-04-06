@@ -72,6 +72,7 @@ class UpdateMatches:
     def updater(self, sport):
         start_date = datetime.now().date()
         real_start = start_date
+        self.__db_acts.clean_db()
         while True:
             formatted_date = start_date.strftime("%d-%m-%Y")
             try:
@@ -185,7 +186,7 @@ class Leon:
         return data
 
     def third_task(self, sport):
-        time.sleep(3)
+        time.sleep(5)
         match sport:
             case 'football':
                 return self.__driver.find_element(By.XPATH,
@@ -229,7 +230,6 @@ class OlimpBet:
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден'])
-        time.sleep(1111)
         self.__driver.quit()
         return False
 
@@ -257,8 +257,6 @@ class OlimpBet:
                     team2 = data[i+1]
                     sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
                                          b=f'{team1.lower()} - {team2.lower()}').ratio()
-                    print(sm)
-                    print(data[i + 2][:-6])
                     if sm >= 0.75 and data[i + 2][:-6] == right_date:
                         current_url = self.__driver.current_url
                         if sport != 'hockey':
@@ -287,7 +285,7 @@ class OlimpBet:
 
     def get_data(self, metch):
         self.__driver.get('https://www.olimp.bet/')
-        time.sleep(10)
+        time.sleep(5)
         self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(
@@ -349,18 +347,20 @@ class Pari:
                 day = day[1]
             if datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
                 day = 'Сегодня'
-                right_date = f'{day} в {times}'
+                right_date = f'{day}'
             elif datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == (datetime.now()+timedelta(days=1)).date():
                 day = 'Завтра'
-                right_date = f'{day} в {times}'
+                right_date = f'{day}'
             else:
-                right_date = f'{day} {self.__month_r[months]} в {times}'
+                right_date = f'{day} {self.__month_r[months]}'
             for i, g in enumerate(data):
                 if '—' in g:
                     index = g.index('—')
                     team1 = g[:index - 1]
                     team2 = g[index + 2:]
-                    if (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()) and data[i + 1] == right_date:
+                    sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
+                                         b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    if sm >= 0.75 and data[i + 1][:-8] == right_date:
                         for k in range(10):
                             try:
                                 self.second_task(k, element_quanity)
@@ -403,7 +403,7 @@ class Pari:
 
     def get_data(self, metch):
         self.__driver.get('https://www.pari.ru/')
-        time.sleep(10)
+        time.sleep(5)
         self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(
@@ -473,23 +473,24 @@ class FonBet:
                 day = day[1]
             if datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
                 day = 'Сегодня'
-                right_date = f'{day} в {times}'
+                right_date = f'{day}'
             elif datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == (datetime.now() + timedelta(days=1)).date():
                 day = 'Завтра'
-                right_date = f'{day} в {times}'
+                right_date = f'{day}'
             else:
-                right_date = f'{day} {self.__month_r[months]} в {times}'
+                right_date = f'{day} {self.__month_r[months]}'
             for i, g in enumerate(data):
                 if '—' in g:
                     my_math = f'{math[1]} - {math[2]}'
                     index = g.index('—')
                     team1 = g[:index - 1]
                     team2 = g[index + 2:]
-                    if (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()) and data[i + 1] == right_date:
+                    sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
+                                         b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    if sm >= 0.75 and data[i + 1][:-8] == right_date:
                         self.second_task(element_quanity)
                         current_url = self.__driver.current_url
                         ratio = self.third_task(sport).split('\n')
-                        print(ratio)
                         if sport != 'basketball':
                             if math[1].lower() in ratio[0].lower():
                                 ratios.append([math[1], ratio[1], current_url])
@@ -520,7 +521,7 @@ class FonBet:
 
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
-        time.sleep(10)
+        time.sleep(5)
         self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(
@@ -616,7 +617,7 @@ class LigaStavok:
 
     def get_data(self, metch):
         self.__driver.get('https://www.ligastavok.ru/')
-        time.sleep(10)
+        time.sleep(5)
         self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="header-search"]')))

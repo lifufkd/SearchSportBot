@@ -63,6 +63,11 @@ class DbAct:
     def last_sport_date(self, sport):
         return self.__db.db_read(f'SELECT MAX(date) FROM "{sport}"', ())[0][0]
 
+    def clean_db(self):
+        self.__db.db_write('DELETE * FROM basketball', ())
+        self.__db.db_write('DELETE * FROM football', ())
+        self.__db.db_write('DELETE * FROM hockey', ())
+
     def get_team_matches(self, sport, team):
         return self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE (LOWER(`first_team`) LIKE LOWER("%{team}%") OR LOWER(`second_team`) LIKE lower("%{team}%")) AND `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC LIMIT 5', ())
 
