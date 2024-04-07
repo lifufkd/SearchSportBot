@@ -73,14 +73,9 @@ class DbAct:
         result = list()
         data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" ORDER BY `date` ASC', ())
         for element in data:
-            sm1 = SequenceMatcher(a=element[1].lower(),
-                                 b=team.lower()).ratio()
-            sm2 = SequenceMatcher(a=element[2].lower(),
-                                  b=team.lower()).ratio()
-            print(sm1, sm2)
             if len(result) >= 5:
                 break
-            elif (sm1 >= 0.8 or sm2 >= 0.8) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
+            elif (team.lower() in element[1].lower() or team.lower() in element[2].lower()) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
                 result.append(element)
         return result
 

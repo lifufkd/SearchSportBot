@@ -59,34 +59,38 @@ def cleaner():
                 pass
 
 
-def waiter(user_id, status, user_team, s=''):
-    keffs = list()
+def waiter(user_id, status, s=''):
+    ratios = list()
     out = list()
+    temp = list()
+    buttons = Bot_inline_btns()
     while True:
         if len(temp_user_data.temp_data(user_id)[user_id][4]) == 4:
             break
         time.sleep(1)
-    for index, i in temp_user_data.temp_data(user_id)[user_id][4]:
-        if 'матч не найден' in g[0]:
-            keffs.append(i[k+1])
-        else:
-            sm1 = SequenceMatcher(a=element[1].lower(),
-                                  b=team.lower()).ratio()
-            sm2 = SequenceMatcher(a=element[2].lower(),
-                                  b=team.lower()).ratio()
-            if
-                keffs.append(i[k+1])
-
-    keffs.sort()
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
-        if 'матч не найден' not in i[0]:
-            s += f'<a href="{i[1][2]}">{i[0]}{i[1][0]} <b>{i[1][1]}</b> | {i[2][0]} <b>{i[2][1]}</b> | {i[3][0]} <b>{i[3][1]}</b></a>\n'
-        else:
-            s += f'{i[0]}\n'
+        ratios.append(i[1])
+    ratios.sort()
+    for i in reversed(ratios):
+        for g in temp_user_data.temp_data(user_id)[user_id][4]:
+            if g[1] == i and g[0] not in temp:
+                if 'матч не найден' not in g[0]:
+                    out.append(f'<a href="{g[2][2]}">• {g[0]}{g[2][0]} <b>{g[2][1]}</b> | {g[3][0]} <b>{g[3][1]}</b> | {g[4][0]} <b>{g[4][1]}</b></a>\n\n')
+                else:
+                    out.append(f'{g[0]}\n')
+                temp.append(g[0])
+    for i in out:
+        s += i
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
-    temp_user_data.temp_data(user_id)[user_id][0] = status
+    temp_user_data.temp_data(user_id)[user_id][0] = None
     cleaner()
     bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
+    time.sleep(1)
+    if status == 1:
+        stat = True
+    else:
+        stat = False
+    bot.send_message(user_id, 'Хотите найти ещё кэфы?', reply_markup=buttons.new_search_btns(stat))
     ### функция пользовательского поиска
     #if 'матч не найден' in s:
         #temp_user_data.temp_data(user_id)[user_id][0] = 3
@@ -97,17 +101,17 @@ def waiter(user_id, status, user_team, s=''):
 
 def get_all_ratio(user_id):
     status = temp_user_data.temp_data(user_id)[user_id][0]
-    selected_team = temp_user_data.temp_data(user_id)[user_id][3]
+    selected_teams = temp_user_data.temp_data(user_id)[user_id][3]
     inp_team = temp_user_data.temp_data(user_id)[user_id][5]
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
     bot.send_message(user_id, 'Ищу лучшие кэфы')
-    threading.Thread(target=LigaStavok, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=FonBet, args=(sport, selected_team, temp_user_data, user_id)).start()  # work all
-    #threading.Thread(target=OlimpBet, args=(sport, selected_team, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=Pari, args=(sport, selected_team, temp_user_data, user_id)).start() # work all
-    threading.Thread(target=Leon, args=(sport, selected_team, temp_user_data, user_id)).start()
-    threading.Thread(target=waiter, args=(user_id, status, inp_team)).start()
+    threading.Thread(target=LigaStavok, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=FonBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
+    #threading.Thread(target=OlimpBet, args=(sport, selected_teams, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=Pari, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start() # work all
+    threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()
+    threading.Thread(target=waiter, args=(user_id, status)).start()
 
 
 def main():
@@ -136,6 +140,7 @@ def main():
     @bot.callback_query_handler(func=lambda call: True)
     def callback(call):
         command = call.data
+        buttons = Bot_inline_btns()
         user_id = call.message.chat.id
         if db_actions.user_is_existed(user_id):
             code = temp_user_data.temp_data(user_id)[user_id][0]
@@ -146,6 +151,17 @@ def main():
             elif command[:4] == 'game' and code == 1:
                 temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
                 get_all_ratio(user_id)
+            elif command[:10] == 'new_search':
+                match command[10:]:
+                    case '1':
+                        full_data = temp_user_data.temp_data(user_id)[user_id][2]
+                        temp_user_data.temp_data(user_id)[user_id][0] = 1
+                        s = matches(full_data)
+                        bot.send_message(user_id, f'Для этой команды нашлось {len(full_data)} матчей: \n{s}',
+                                         reply_markup=buttons.games_btns(len(full_data)))
+                    case '2':
+                        temp_user_data.temp_data(user_id)[user_id][0] = 0
+                        bot.send_message(user_id, 'Напишите название команды')
             if db_actions.user_is_admin(user_id):
                 if command == 'export':
                     db_actions.db_export_xlsx()
@@ -167,7 +183,6 @@ def main():
                         temp_user_data.temp_data(user_id)[user_id][5] = user_input
                         if len(full_data) > 0:
                             if len(full_data) == 1:
-                                temp_user_data.temp_data(user_id)[user_id][0] = None
                                 temp_user_data.temp_data(user_id)[user_id][3] = full_data[0]
                                 get_all_ratio(user_id)
                             else:

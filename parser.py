@@ -10,7 +10,6 @@ import time
 import sys
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -58,7 +57,6 @@ class UpdateMatches:
     def main_script(self, formatted_date, sport, start_date):
         games_data = self.get_content(formatted_date, sport)
         if 'нет соревнований' not in games_data:
-            cleaned_games = list()
             array_games_data = games_data.split('\n')[3:]
             for index, element in enumerate(array_games_data):
                 try:
@@ -101,7 +99,7 @@ class UpdateMatches:
 
 
 class Leon:
-    def __init__(self, sport, math, temp_user_data, user_id):
+    def __init__(self, selected_team, sport, math, temp_user_data, user_id):
         super(Leon, self).__init__()
         self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
                         '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
@@ -113,7 +111,7 @@ class Leon:
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(sport, math, user_id)
+        self.parser(selected_team , sport, math, user_id)
 
     def init(self):
         options = Options()
@@ -121,19 +119,18 @@ class Leon:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден', -1.00])
         self.__driver.quit()
         return False
 
-    def parser(self, sport, math, user_id):
+    def parser(self, selected_team , sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
             selector = 0
             section = 1
-            ratios = ['Leon: ']
+            ratios = ['Leon: ', -1.00]
             months = math[0][5:7]
             day = math[0][8:10]
-            times = math[0][11:16]
             right_date = f'{day}.{months}'
             if 'Линия' in data[0]:
                 one_line = True
@@ -154,11 +151,19 @@ class Leon:
                         index = g.index('-')
                         team1 = g[:index-1]
                         ratio = self.third_task(sport).split('\n')
+                        sm1 = SequenceMatcher(a=selected_team.lower(),
+                                              b=team1.lower()).ratio()
+                        if sm1 >= 0.8:
+                            cef = ratio[1]
+                        else:
+                            cef = ratio[5]
                         if math[1].lower() in team1.lower():
+                            ratios[1] = float(cef.replace(',', '.'))
                             ratios.append([math[1], ratio[1], current_url])
                             ratios.append(['ничья', ratio[3], current_url])
                             ratios.append([math[2], ratio[5], current_url])
                         else:
+                            ratios[1] = float(cef.replace(',', '.'))
                             ratios.append([math[1], ratio[5], current_url])
                             ratios.append(['ничья', ratio[3], current_url])
                             ratios.append([math[2], ratio[1], current_url])
@@ -180,9 +185,9 @@ class Leon:
             EC.presence_of_element_located(
                 (By.XPATH, '/html/body/div[2]/header/div/div/div/div[2]/div[1]/button')))
         element.click()
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.NAME, 'search').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(3)
+        time.sleep(5)
         data = self.__driver.find_element(By.XPATH, '/html/body/div[3]/div/div/div/div[2]/div/div[1]/div').text
         return data
 
@@ -200,7 +205,7 @@ class Leon:
                                           '/html/body/div[2]/section/div/main/div[2]/div[3]/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[3]').text
 
     def second_task(self, section, index, one_line):
-        time.sleep(3)
+        time.sleep(5)
         if not one_line:
             self.__driver.find_element(By.XPATH,
                                        f'/html/body/div[3]/div/div/div/div[2]/div/div[1]/div/div[2]/div/section[{section}]/ul/li[{index}]/a').click()
@@ -210,7 +215,7 @@ class Leon:
 
 
 class OlimpBet:
-    def __init__(self, sport, math, temp_user_data, user_id):
+    def __init__(self, selected_team, sport, math, temp_user_data, user_id):
         super(OlimpBet, self).__init__()
         self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
                         '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
@@ -222,7 +227,7 @@ class OlimpBet:
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(sport, math, user_id)
+        self.parser(selected_team, sport, math, user_id)
 
     def init(self):
         options = Options()
@@ -230,18 +235,17 @@ class OlimpBet:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден', -1.00])
         self.__driver.quit()
         return False
 
-    def parser(self, sport, math, user_id):
+    def parser(self, selected_team, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
-            ratios = ['OlimpBet: ']
+            ratios = ['OlimpBet: ', -1.00]
             year = math[0][:4]
             months = math[0][5:7]
             day = math[0][8:10]
-            times = math[0][11:16]
             if day[0] == '0':
                 day = day[1]
             if datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
@@ -272,11 +276,19 @@ class OlimpBet:
                             ratio1 = data[i + 4]
                             ratio2 = data[i + 5]
                             ratio3 = data[i + 6]
+                        sm1 = SequenceMatcher(a=selected_team.lower(),
+                                              b=team1.lower()).ratio()
+                        if sm1 >= 0.8:
+                            cef = ratio1
+                        else:
+                            cef = ratio3
                         if math[1].lower() in team1.lower():
+                            ratios[1] = float(cef.replace(',', '.'))
                             ratios.append([math[1], ratio1, current_url])
                             ratios.append(['ничья', ratio2, current_url])
                             ratios.append([math[2], ratio3, current_url])
                         else:
+                            ratios[1] = float(cef.replace(',', '.'))
                             ratios.append([math[1], ratio3, current_url])
                             ratios.append(['ничья', ratio2, current_url])
                             ratios.append([math[2], ratio1, current_url])
@@ -297,25 +309,25 @@ class OlimpBet:
             EC.presence_of_element_located(
                 (By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[2]/div[1]/div[1]/div/button[2]')))
         element.click()
-        time.sleep(3)
-        search_place = self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(3)
+        time.sleep(5)
+        self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
+        time.sleep(5)
         data = self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[2]/div[1]/div/div[2]').text
         return data
 
     def third_task(self):
-        time.sleep(3)
+        time.sleep(5)
         return self.__driver.find_element(By.XPATH,
                                           '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]/div[1]/div[2]/div/div[2]/div/div/div[1]').text
 
     def second_task(self, atempt, index):
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH,
                                    f'/html/body/div[{atempt}]/div/div[2]/div/div/div[{index}]/a').click()
 
 
 class Pari:
-    def __init__(self, sport, math, temp_user_data, user_id):
+    def __init__(self, selected_team, sport, math, temp_user_data, user_id):
         super(Pari, self).__init__()
         self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
                         '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
@@ -327,7 +339,7 @@ class Pari:
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(sport, math, user_id)
+        self.parser(selected_team, sport, math, user_id)
 
     def init(self):
         options = Options()
@@ -335,19 +347,18 @@ class Pari:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден', -1.00])
         self.__driver.quit()
         return False
 
-    def parser(self, sport, math, user_id):
+    def parser(self, selected_team , sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
-            ratios = ['Pari: ']
+            ratios = ['Pari: ', -1.00]
             flag = False
             element_quanity = 0
             months = math[0][5:7]
             day = math[0][8:10]
-            times = math[0][11:16]
             if day[0] == '0':
                 day = day[1]
             if datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
@@ -381,21 +392,31 @@ class Pari:
                             current_url = self.__driver.current_url
                             ratio = self.third_task(sport).split('\n')
                             print(ratio)
+                            sm1 = SequenceMatcher(a=selected_team.lower(),
+                                                  b=ratio[0].lower()).ratio()
+                            if sm1 >= 0.8:
+                                cef = ratio[1]
+                            else:
+                                cef = ratio[5]
                             if sport != 'basketball':
                                 if math[1].lower() in ratio[0].lower():
+                                    ratios[1] = float(cef.replace(',', '.'))
                                     ratios.append([math[1], ratio[1], current_url])
                                     ratios.append(['ничья', ratio[3], current_url])
                                     ratios.append([math[2], ratio[5], current_url])
                                 else:
+                                    ratios[1] = float(cef.replace(',', '.'))
                                     ratios.append([math[1], ratio[5], current_url])
                                     ratios.append(['ничья', ratio[3], current_url])
                                     ratios.append([math[2], ratio[1], current_url])
                             else:
                                 if math[1].lower() in ratio[0].lower():
+                                    ratios[1] = float(cef.replace(',', '.'))
                                     ratios.append([math[1], ratio[1], current_url])
                                     ratios.append(['ничья', '-', current_url])
                                     ratios.append([math[2], ratio[3], current_url])
                                 else:
+                                    ratios[1] = float(cef.replace(',', '.'))
                                     ratios.append([math[1], ratio[3], current_url])
                                     ratios.append(['ничья', '-', current_url])
                                     ratios.append([math[2], ratio[1], current_url])
@@ -429,7 +450,7 @@ class Pari:
         return data
 
     def third_task(self, sport):
-        time.sleep(3)
+        time.sleep(5)
         match sport:
             case 'football':
                 return self.__driver.find_element(By.XPATH,
@@ -442,13 +463,13 @@ class Pari:
                                                   '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]/div[1]/div[2]/div/div/div').text
 
     def second_task(self, atempt, index):
-        time.sleep(3)
+        time.sleep(1)
         self.__driver.find_element(By.XPATH,
                                    f'/html/body/div[{atempt}]/div/div[2]/div/div/div[{index}]/a').click()
 
 
 class FonBet:
-    def __init__(self, sport, math, temp_user_data, user_id):
+    def __init__(self, selected_team, sport, math, temp_user_data, user_id):
         super(FonBet, self).__init__()
         self.__month = {'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
                         'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11',
@@ -460,7 +481,7 @@ class FonBet:
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(sport, math, user_id)
+        self.parser(selected_team, sport, math, user_id)
 
     def init(self):
         options = Options()
@@ -468,18 +489,17 @@ class FonBet:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден', -1.00])
         self.__driver.quit()
         return False
 
-    def parser(self, sport, math, user_id):
+    def parser(self, selected_team, sport, math, user_id):
         try:
-            ratios = ['FonBet: ']
+            ratios = ['FonBet: ', -1.00]
             data = self.get_data(math).split('\n')
             element_quanity = 0
             months = math[0][5:7]
             day = math[0][8:10]
-            times = math[0][11:16]
             if day[0] == '0':
                 day = day[1]
             if datetime.strptime(math[0], '%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
@@ -492,7 +512,6 @@ class FonBet:
                 right_date = f'{day} {self.__month_r[months]}'
             for i, g in enumerate(data):
                 if '—' in g:
-                    my_math = f'{math[1]} - {math[2]}'
                     index = g.index('—')
                     team1 = g[:index - 1]
                     team2 = g[index + 2:]
@@ -506,21 +525,31 @@ class FonBet:
                         self.second_task(element_quanity)
                         current_url = self.__driver.current_url
                         ratio = self.third_task(sport).split('\n')
+                        sm1 = SequenceMatcher(a=selected_team.lower(),
+                                              b=ratio[0].lower()).ratio()
+                        if sm1 >= 0.8:
+                            cef = ratio[1]
+                        else:
+                            cef = ratio[5]
                         if sport != 'basketball':
                             if math[1].lower() in ratio[0].lower():
+                                ratios[1] = float(cef.replace(',', '.'))
                                 ratios.append([math[1], ratio[1], current_url])
                                 ratios.append(['ничья', ratio[3], current_url])
                                 ratios.append([math[2], ratio[5], current_url])
                             else:
+                                ratios[1] = float(cef.replace(',', '.'))
                                 ratios.append([math[1], ratio[5], current_url])
                                 ratios.append(['ничья', ratio[3], current_url])
                                 ratios.append([math[2], ratio[1], current_url])
                         else:
                             if math[1].lower() in ratio[0].lower():
+                                ratios[1] = float(cef.replace(',', '.'))
                                 ratios.append([math[1], ratio[1], current_url])
                                 ratios.append(['ничья', '-', current_url])
                                 ratios.append([math[2], ratio[3], current_url])
                             else:
+                                ratios[1] = float(cef.replace(',', '.'))
                                 ratios.append([math[1], ratio[3], current_url])
                                 ratios.append(['ничья', '-', current_url])
                                 ratios.append([math[2], ratio[1], current_url])
@@ -542,19 +571,19 @@ class FonBet:
         element = WebDriverWait(self.__driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span')))
         element.click()
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH,
                                    '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(f'{math[1]} - {math[2]}')
-        time.sleep(3)
+        time.sleep(5)
         return self.__driver.find_element(By.XPATH,
                                          '/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]').text
 
     def third_task(self, sport):
-        time.sleep(3)
+        time.sleep(5)
         match sport:
             case 'football':
                 return self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div[1]').text
@@ -566,21 +595,21 @@ class FonBet:
                                                             '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div[2]/div/div/div').text
 
     def second_task(self, index):
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH, f'/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]/div[2]/div[{index}]').click()
 
 
 class LigaStavok:
-    def __init__(self, sport, math, temp_user_data, user_id):
+    def __init__(self, selected_team, sport, math, temp_user_data, user_id):
         super(LigaStavok, self).__init__()
-        self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
-                        '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
-                        '12': 'декабря'}
+        self.__month_r = {'01': 'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
+                          '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
+                          '12': 'декабря'}
         self.__driver = None
         self.__temp_data = temp_user_data
         self.__input_field = None
         self.init()
-        self.parser(sport, math, user_id)
+        self.parser(selected_team, sport, math, user_id)
 
     def init(self):
         options = Options()
@@ -588,70 +617,83 @@ class LigaStavok:
         self.__driver = uc.Chrome()
 
     def error_parse(self, user_id):
-        self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден'])
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден', -1.00])
         self.__driver.quit()
         return False
 
-    def parser(self, sport, math, user_id):
+    def parser(self, selected_team, sport, math, user_id):
         try:
             data = self.get_data(math).split('\n')
-            print(data)
-            dates = list()
-            ratios = ['Лига ставок: ']
-            for i in range(2, len(data), 3):
-                dates.append(data[i - 1])
-            year = math[0][:4]
+            ratios = ['Лига ставок: ', -1.00]
+            element_quanity = 0
             months = math[0][5:7]
             day = math[0][8:10]
-            times = math[0][11:16]
             if day[0] == '0':
                 day = day[1]
-            right_date = f'{day} {self.__month[months]} {year}, {times}'
-            print(f'true date {right_date}', 'liga')
-            if right_date in dates:
-                self.choose_match(dates.index(right_date) + 1)
-                ratio = self.get_ratio().split('\n')[0:7]
-                current_url = self.__driver.current_url
-                if math[1].lower() in ratio[0].lower():
-                    ratios.append([math[1], ratio[1], current_url])
-                    ratios.append(['ничья', ratio[3], current_url])
-                    ratios.append([math[2], ratio[5], current_url])
-                else:
-                    ratios.append([math[1], ratio[5], current_url])
-                    ratios.append(['ничья', ratio[3], current_url])
-                    ratios.append([math[2], ratio[1], current_url])
-                self.__temp_data.temp_data(user_id)[user_id][4].append(ratios)
-                self.__driver.quit()
-                return ratios
+            right_date = f'{day} {self.__month_r[months]}'
+            for i, g in enumerate(data):
+                element_quanity += 1
+                if ' - ' in g:
+                    index = g.index('-')
+                    team1 = g[:index - 1]
+                    team2 = g[index + 2:]
+                    sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
+                                         b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    print(sm, 'liga')
+                    print(f"s date {f'{data[i + 1][:-12]}'} true date {right_date}", 'liga')
+                    if ((sm >= 0.75 or (math[1].lower() in team1.lower() or math[1].lower() in team2.lower())
+                         and (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()))
+                            and data[i + 1][:-12] == right_date):
+                        self.choose_match(element_quanity)
+                        ratio = self.get_ratio().split('\n')[0:7]
+                        print(ratio)
+                        current_url = self.__driver.current_url
+                        sm1 = SequenceMatcher(a=selected_team.lower(),
+                                              b=ratio[0].lower()).ratio()
+                        if sm1 >= 0.8:
+                            cef = ratio[1]
+                        else:
+                            cef = ratio[5]
+                        if math[1].lower() in ratio[0].lower():
+                            ratios[1] = float(cef.replace(',', '.'))
+                            ratios.append([math[1], ratio[1], current_url])
+                            ratios.append(['ничья', ratio[3], current_url])
+                            ratios.append([math[2], ratio[5], current_url])
+                        else:
+                            ratios[1] = float(cef.replace(',', '.'))
+                            ratios.append([math[1], ratio[5], current_url])
+                            ratios.append(['ничья', ratio[3], current_url])
+                            ratios.append([math[2], ratio[1], current_url])
+                        self.__temp_data.temp_data(user_id)[user_id][4].append(ratios)
+                        self.__driver.quit()
+                        return ratios
 
-            else:
-                self.error_parse(user_id)
-        except Exception as e:
-            print(e)
             self.error_parse(user_id)
+        except Exception as e:
+            print(e, 'liga')
+            self.error_parse(user_id)
+
 
 
     def get_data(self, metch):
         self.__driver.get('https://www.ligastavok.ru/')
         time.sleep(5)
-        self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="header-search"]')))
         element.click()
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[1]/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(3)
+        time.sleep(5)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[1]/div[1]/button').click()
-        time.sleep(3)
+        time.sleep(5)
         return self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[2]').text
 
     def choose_match(self, index):
-        time.sleep(3)
+        time.sleep(5)
         element = self.__driver.find_element(By.XPATH, f'/html/body/div[1]/div[3]/div[2]/div/div[2]/div/a[{index}]')
         self.__driver.execute_script("arguments[0].scrollIntoView(true);", element)
         ActionChains(self.__driver).move_to_element(element).click().perform()
 
     def get_ratio(self):
-        time.sleep(3)
-        return self.__driver.find_element(By.CLASS_NAME, 'market__outcomes-96e4e5').text
+        time.sleep(5)
+        return self.__driver.find_element(By.CLASS_NAME, f'market__outcomes-96e4e5').text
 

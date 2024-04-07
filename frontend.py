@@ -32,3 +32,13 @@ class Bot_inline_btns:
             btn = types.InlineKeyboardButton(f'{i+1}', callback_data=f'game{i}')
             markup.add(btn)
         return markup
+
+    def new_search_btns(self, stat):
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        d1 = types.InlineKeyboardButton('Выбрать другой матч по той же команде', callback_data='new_search1')
+        d2 = types.InlineKeyboardButton('Найти матчи другой команды', callback_data='new_search2')
+        if stat:
+            markup.add(d1, d2)
+        else:
+            markup.add(d2)
+        return markup
