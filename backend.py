@@ -18,7 +18,7 @@ class TempUserData:
 
     def temp_data(self, user_id):
         if user_id not in self.__user_data.keys():
-            self.__user_data.update({user_id: [None, None, [], [], []]})
+            self.__user_data.update({user_id: [None, None, [], [], [], None]})
         return self.__user_data
 
 
@@ -65,34 +65,24 @@ class DbAct:
         return self.__db.db_read(f'SELECT MAX(date) FROM "{sport}"', ())[0][0]
 
     def clean_db(self):
-        self.__db.db_write('DELETE * FROM basketball', ())
-        self.__db.db_write('DELETE * FROM football', ())
-        self.__db.db_write('DELETE * FROM hockey', ())
+        self.__db.db_write('DELETE FROM basketball', ())
+        self.__db.db_write('DELETE FROM football', ())
+        self.__db.db_write('DELETE FROM hockey', ())
 
     def get_team_matches(self, sport, team):
         result = list()
-        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC', ())
+        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" ORDER BY `date` ASC', ())
         for element in data:
             sm1 = SequenceMatcher(a=element[1].lower(),
                                  b=team.lower()).ratio()
             sm2 = SequenceMatcher(a=element[2].lower(),
                                   b=team.lower()).ratio()
+            print(sm1, sm2)
             if len(result) >= 5:
                 break
-            elif sm1 >= 0.8 or sm2 >= 0.8:
+            elif (sm1 >= 0.8 or sm2 >= 0.8) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
                 result.append(element)
         return result
-
-    def get_team_matches_strict(self, sport, team):
-        result = list()
-        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE `date` > "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" ORDER BY `date` ASC', ())
-        for element in data:
-            if len(result) >= 5:
-                break
-            elif element[1].lower() == team.lower() or element[2].lower() == team.lower():
-                result.append(element)
-        return result
-
 
     def db_export_xlsx(self):
         d = {'Имя': [], 'Фамилия': [], 'Никнейм': []}
