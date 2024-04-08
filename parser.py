@@ -5,6 +5,7 @@
 #####################################
 import json
 import os
+import threading
 import undetected_chromedriver as uc
 import time
 import sys
@@ -12,6 +13,7 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from backend import BuildPhoto
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -55,17 +57,21 @@ class UpdateMatches:
         self.updater(sport)
 
     def main_script(self, formatted_date, sport, start_date):
+        icon_start = 0
         games_data = self.get_content(formatted_date, sport)
         if 'нет соревнований' not in games_data:
             array_games_data = games_data.split('\n')[3:]
+            print(array_games_data)
             for index, element in enumerate(array_games_data):
                 try:
                     if len(element) == 5 and element[2] == ':':
+
                         hours = int(array_games_data[index][:2])
                         minutes = int(array_games_data[index][3:])
                         datetime_with_time = datetime.combine(start_date, datetime.min.time()) + timedelta(hours=hours, minutes=minutes)
                         self.__db_acts.update_sport(sport, [datetime_with_time, array_games_data[index + 2], array_games_data[index + 4]])
-                except Exception as e:
+                        icon_start += 2
+                except:
                     pass
 
     def updater(self, sport):
@@ -82,8 +88,7 @@ class UpdateMatches:
                     pass
                 else:
                     self.main_script(formatted_date, sport, start_date)
-            except Exception as e:
-                print(e)
+            except:
                 self.main_script(formatted_date, sport, start_date)
             start_date += timedelta(days=1)
 
@@ -93,9 +98,16 @@ class UpdateMatches:
         self.__driver = uc.Chrome()
 
     def get_content(self, date, sport):
+        icons = list()
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
         time.sleep(1)
-        return self.__driver.find_element(By.XPATH, f"/html/body/div[2]/section/div[2]/div[1]/div/div/div[4]/div").text
+        parent = self.__driver.find_element(By.XPATH, f"/html/body/div[2]/section/div[2]/div[1]/div/div/div[4]/div")
+        child = parent.find_elements(By.TAG_NAME, 'img')
+        for i in child:
+            icon = i.get_attribute("src")
+            if sport in icon
+                icons.append(icon)
+        return parent.text, icons
 
 
 class Leon:

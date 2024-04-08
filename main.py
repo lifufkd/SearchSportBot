@@ -222,5 +222,6 @@ if '__main__' == __name__:
     db_actions = DbAct(db, config, config.get_config()['xlsx_path'])
     threading.Thread(target=schedule_worker).start()
     schedule.every().day.at('00:00').do(sync_db)
+    sync_db()
     bot = telebot.TeleBot(config.get_config()['tg_api'])
     main()
