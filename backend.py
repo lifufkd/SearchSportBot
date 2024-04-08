@@ -117,24 +117,12 @@ class BuildPhoto:
     def build(self, logo1, logo2, background_image):
         logo1_width, logo1_height = logo1.size
         logo2_width, logo2_height = logo2.size
-
-        # Определяем размеры и отступ между логотипами
         padding = 50
         combined_width = logo1_width + padding + logo2_width
         combined_height = max(logo1_height, logo2_height)
-
-        # Создаем пустое изображение для объединения логотипов
         combined_image = Image.new("RGBA", (combined_width, combined_height), (255, 255, 255, 0))
-
-        # Размещаем логотипы с отступом между ними
         combined_image.paste(logo1, (0, (combined_height - logo1_height) // 2))
         combined_image.paste(logo2, (logo1_width + padding, (combined_height - logo2_height) // 2))
-
-        # Преобразуем задний план к размеру объединенного изображения
         background_image = background_image.resize((combined_width, combined_height))
-
-        # Объединяем задний план и логотипы
         combined_image = Image.alpha_composite(background_image.convert('RGBA'), combined_image)
-
-        # Сохраняем объединенное изображение
         combined_image.save("combined_logos_with_background.png")

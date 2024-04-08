@@ -105,7 +105,7 @@ class UpdateMatches:
         child = parent.find_elements(By.TAG_NAME, 'img')
         for i in child:
             icon = i.get_attribute("src")
-            if sport in icon
+            if sport in icon:
                 icons.append(icon)
         return parent.text, icons
 
