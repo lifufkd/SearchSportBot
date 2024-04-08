@@ -29,6 +29,12 @@ def sync_db():
             threading.Thread(target=UpdateMatches, args=(db_actions, sport)).start()
 
 
+def choose_sport(user_id, sport):
+    temp_user_data.temp_data(user_id)[user_id][0] = 0
+    temp_user_data.temp_data(user_id)[user_id][1] = sport
+    bot.send_message(user_id, 'Напишите название команды')
+
+
 def matches(data):
     s = ''
     for i, g in enumerate(data):
@@ -59,7 +65,7 @@ def cleaner():
                 pass
 
 
-def waiter(user_id, status, s=''):
+def waiter(user_id, s=''):
     ratios = list()
     out = list()
     temp = list()
@@ -84,13 +90,12 @@ def waiter(user_id, status, s=''):
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
     temp_user_data.temp_data(user_id)[user_id][0] = None
     cleaner()
-    bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
-    time.sleep(1)
-    if status == 1:
-        stat = True
+    if temp_user_data.temp_data(user_id)[user_id][1] != 'basketball':
+        bot.send_photo(chat_id=user_id, caption=s, parse_mode='html', photo=temp_user_data.temp_data(user_id)[user_id][3][3])
     else:
-        stat = False
-    bot.send_message(user_id, 'Хотите найти ещё кэфы?', reply_markup=buttons.new_search_btns(stat))
+        bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
+    time.sleep(1)
+    bot.send_message(user_id, 'Хотите найти ещё кэфы?', reply_markup=buttons.new_btns())
     ### функция пользовательского поиска
     #if 'матч не найден' in s:
         #temp_user_data.temp_data(user_id)[user_id][0] = 3
@@ -100,7 +105,6 @@ def waiter(user_id, status, s=''):
 
 
 def get_all_ratio(user_id):
-    status = temp_user_data.temp_data(user_id)[user_id][0]
     selected_teams = temp_user_data.temp_data(user_id)[user_id][3]
     inp_team = temp_user_data.temp_data(user_id)[user_id][5]
     sport = temp_user_data.temp_data(user_id)[user_id][1]
@@ -111,7 +115,7 @@ def get_all_ratio(user_id):
     #threading.Thread(target=OlimpBet, args=(sport, selected_teams, temp_user_data, user_id)).start()# work all
     threading.Thread(target=Pari, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start() # work all
     threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()
-    threading.Thread(target=waiter, args=(user_id, status)).start()
+    threading.Thread(target=waiter, args=(user_id, )).start()
 
 
 def main():
@@ -140,28 +144,14 @@ def main():
     @bot.callback_query_handler(func=lambda call: True)
     def callback(call):
         command = call.data
-        buttons = Bot_inline_btns()
         user_id = call.message.chat.id
         if db_actions.user_is_existed(user_id):
             code = temp_user_data.temp_data(user_id)[user_id][0]
             if command[:5] == 'sport':
-                temp_user_data.temp_data(user_id)[user_id][0] = 0
-                temp_user_data.temp_data(user_id)[user_id][1] = command[5:]
-                bot.send_message(user_id, 'Напишите название команды')
+                choose_sport(user_id, command[5:])
             elif command[:4] == 'game' and code == 1:
                 temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
                 get_all_ratio(user_id)
-            elif command[:10] == 'new_search':
-                match command[10:]:
-                    case '1':
-                        full_data = temp_user_data.temp_data(user_id)[user_id][2]
-                        temp_user_data.temp_data(user_id)[user_id][0] = 1
-                        s = matches(full_data)
-                        bot.send_message(user_id, f'Для этой команды нашлось {len(full_data)} матчей: \n{s}',
-                                         reply_markup=buttons.games_btns(len(full_data)))
-                    case '2':
-                        temp_user_data.temp_data(user_id)[user_id][0] = 0
-                        bot.send_message(user_id, 'Напишите название команды')
             if db_actions.user_is_admin(user_id):
                 if command == 'export':
                     db_actions.db_export_xlsx()
@@ -170,7 +160,6 @@ def main():
 
     @bot.message_handler(content_types=['text', 'photo'])
     def text_message(message):
-        photo = message.photo
         user_input = message.text
         user_id = message.chat.id
         buttons = Bot_inline_btns()
@@ -179,7 +168,11 @@ def main():
             match code:
                 case 0:
                     if user_input is not None:
-                        full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
+                        if temp_user_data.temp_data(user_id)[user_id][1] != 'basketball':
+                            full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
+                        else:
+                            full_data = db_actions.get_basketball_matches(temp_user_data.temp_data(user_id)[user_id][1],
+                                                                    user_input)
                         temp_user_data.temp_data(user_id)[user_id][5] = user_input
                         if len(full_data) > 0:
                             if len(full_data) == 1:
@@ -209,6 +202,15 @@ def main():
                             bot.send_message(user_id, 'Без знака "-" я не понимаю как отличить 2 команды. Напишите ещё раз')
                     else:
                         bot.send_message(user_id, 'Это не текст!')
+                case None:
+                    match user_input:
+                        case 'Футбол ⚽️':
+                            choose_sport(user_id, 'football')
+                        case 'Хоккей🏒':
+                            choose_sport(user_id, 'hockey')
+                        case 'Баскетбол 🏀':
+                            choose_sport(user_id, 'basketball')
+
 
     bot.polling(none_stop=True)
 
@@ -222,6 +224,5 @@ if '__main__' == __name__:
     db_actions = DbAct(db, config, config.get_config()['xlsx_path'])
     threading.Thread(target=schedule_worker).start()
     schedule.every().day.at('00:00').do(sync_db)
-    sync_db()
     bot = telebot.TeleBot(config.get_config()['tg_api'])
     main()

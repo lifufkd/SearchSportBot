@@ -5,7 +5,7 @@
 #####################################
 import json
 import os
-import threading
+import glob
 import undetected_chromedriver as uc
 import time
 import sys
@@ -58,21 +58,34 @@ class UpdateMatches:
 
     def main_script(self, formatted_date, sport, start_date):
         icon_start = 0
-        games_data = self.get_content(formatted_date, sport)
-        if 'нет соревнований' not in games_data:
-            array_games_data = games_data.split('\n')[3:]
-            print(array_games_data)
-            for index, element in enumerate(array_games_data):
-                try:
+        try:
+            games_data, icons = self.get_content(formatted_date, sport)
+            print(len(icons))
+            if 'нет соревнований' not in games_data:
+                array_games_data = games_data.split('\n')[3:]
+                for index, element in enumerate(array_games_data):
                     if len(element) == 5 and element[2] == ':':
-
+                        if sport != 'basketball':
+                            BuildPhoto(icons[icon_start], icons[icon_start + 1], sport)
+                            with open(f'img/temp/{sport}/result.png', 'rb') as file:
+                                data = file.read()
                         hours = int(array_games_data[index][:2])
                         minutes = int(array_games_data[index][3:])
-                        datetime_with_time = datetime.combine(start_date, datetime.min.time()) + timedelta(hours=hours, minutes=minutes)
-                        self.__db_acts.update_sport(sport, [datetime_with_time, array_games_data[index + 2], array_games_data[index + 4]])
-                        icon_start += 2
-                except:
-                    pass
+                        datetime_with_time = datetime.combine(start_date, datetime.min.time()) + timedelta(hours=hours,
+                                                                                                           minutes=minutes)
+                        if sport != 'basketball':
+                            self.__db_acts.update_sport(sport, [datetime_with_time, array_games_data[index + 2],
+                                                                array_games_data[index + 4], data])
+                            files = glob.glob(os.path.join(f'img/temp/{sport}', '*.*'))
+                            for file in files:
+                                os.remove(file)
+                            icon_start += 2
+                        else:
+                            self.__db_acts.update_basketball(sport, [datetime_with_time, array_games_data[index + 2],
+                                                                array_games_data[index + 4]])
+
+        except Exception as e:
+            print(e)
 
     def updater(self, sport):
         start_date = datetime.now().date()
@@ -100,7 +113,7 @@ class UpdateMatches:
     def get_content(self, date, sport):
         icons = list()
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
-        time.sleep(1)
+        time.sleep(2)
         parent = self.__driver.find_element(By.XPATH, f"/html/body/div[2]/section/div[2]/div[1]/div/div/div[4]/div")
         child = parent.find_elements(By.TAG_NAME, 'img')
         for i in child:
@@ -406,11 +419,11 @@ class Pari:
                             print(ratio)
                             sm1 = SequenceMatcher(a=selected_team.lower(),
                                                   b=ratio[0].lower()).ratio()
-                            if sm1 >= 0.8:
-                                cef = ratio[1]
-                            else:
-                                cef = ratio[5]
                             if sport != 'basketball':
+                                if sm1 >= 0.8:
+                                    cef = ratio[1]
+                                else:
+                                    cef = ratio[5]
                                 if math[1].lower() in ratio[0].lower():
                                     ratios[1] = float(cef.replace(',', '.'))
                                     ratios.append([math[1], ratio[1], current_url])
@@ -422,6 +435,10 @@ class Pari:
                                     ratios.append(['ничья', ratio[3], current_url])
                                     ratios.append([math[2], ratio[1], current_url])
                             else:
+                                if sm1 >= 0.8:
+                                    cef = ratio[1]
+                                else:
+                                    cef = ratio[3]
                                 if math[1].lower() in ratio[0].lower():
                                     ratios[1] = float(cef.replace(',', '.'))
                                     ratios.append([math[1], ratio[1], current_url])
@@ -539,11 +556,11 @@ class FonBet:
                         ratio = self.third_task(sport).split('\n')
                         sm1 = SequenceMatcher(a=selected_team.lower(),
                                               b=ratio[0].lower()).ratio()
-                        if sm1 >= 0.8:
-                            cef = ratio[1]
-                        else:
-                            cef = ratio[5]
                         if sport != 'basketball':
+                            if sm1 >= 0.8:
+                                cef = ratio[1]
+                            else:
+                                cef = ratio[5]
                             if math[1].lower() in ratio[0].lower():
                                 ratios[1] = float(cef.replace(',', '.'))
                                 ratios.append([math[1], ratio[1], current_url])
@@ -555,6 +572,10 @@ class FonBet:
                                 ratios.append(['ничья', ratio[3], current_url])
                                 ratios.append([math[2], ratio[1], current_url])
                         else:
+                            if sm1 >= 0.8:
+                                cef = ratio[1]
+                            else:
+                                cef = ratio[3]
                             if math[1].lower() in ratio[0].lower():
                                 ratios[1] = float(cef.replace(',', '.'))
                                 ratios.append([math[1], ratio[1], current_url])
@@ -578,8 +599,6 @@ class FonBet:
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
         time.sleep(5)
-        self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span')))
         element.click()
@@ -658,7 +677,6 @@ class LigaStavok:
                             and data[i + 1][:-12] == right_date):
                         self.choose_match(element_quanity)
                         ratio = self.get_ratio().split('\n')[0:7]
-                        print(ratio)
                         current_url = self.__driver.current_url
                         sm1 = SequenceMatcher(a=selected_team.lower(),
                                               b=ratio[0].lower()).ratio()
@@ -685,8 +703,6 @@ class LigaStavok:
             print(e, 'liga')
             self.error_parse(user_id)
 
-
-
     def get_data(self, metch):
         self.__driver.get('https://www.ligastavok.ru/')
         time.sleep(5)
@@ -707,5 +723,10 @@ class LigaStavok:
 
     def get_ratio(self):
         time.sleep(5)
-        return self.__driver.find_element(By.CLASS_NAME, f'market__outcomes-96e4e5').text
+        data = self.__driver.find_elements(By.CLASS_NAME, f'market__outcomes-96e4e5')
+        while True:
+            for i in data:
+                cart = i.text
+                if len(cart.split('\n')) >= 7:
+                    return cart
 

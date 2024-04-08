@@ -21,6 +21,14 @@ class Bot_inline_btns:
         self.__markup.add(assortiment, cart, bonus)
         return self.__markup
 
+    def new_btns(self):
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        assortiment = types.KeyboardButton('Футбол ⚽️')
+        cart = types.KeyboardButton('Хоккей🏒 ')
+        bonus = types.KeyboardButton('Баскетбол 🏀')
+        keyboard.add(assortiment, cart, bonus)
+        return keyboard
+
     def admin_btns(self):
         export = types.InlineKeyboardButton('Экспорт БД', callback_data='export')
         self.__markup.add(export)
@@ -31,14 +39,4 @@ class Bot_inline_btns:
         for i in range(games):
             btn = types.InlineKeyboardButton(f'{i+1}', callback_data=f'game{i}')
             markup.add(btn)
-        return markup
-
-    def new_search_btns(self, stat):
-        markup = types.InlineKeyboardMarkup(row_width=1)
-        d1 = types.InlineKeyboardButton('Выбрать другой матч по той же команде', callback_data='new_search1')
-        d2 = types.InlineKeyboardButton('Найти матчи другой команды', callback_data='new_search2')
-        if stat:
-            markup.add(d1, d2)
-        else:
-            markup.add(d2)
         return markup

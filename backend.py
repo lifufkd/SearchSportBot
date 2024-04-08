@@ -5,7 +5,7 @@
 #####################################
 import os
 import time
-
+import shutil
 import requests
 from PIL import Image
 from datetime import datetime
@@ -61,6 +61,9 @@ class DbAct:
             return status
 
     def update_sport(self, sport, data):
+        self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team, photo) VALUES(?, ?, ?, ?)', data)
+
+    def update_basketball(self, sport, data):
         self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team) VALUES(?, ?, ?)', data)
 
     def last_sport_date(self, sport):
@@ -72,6 +75,16 @@ class DbAct:
         self.__db.db_write('DELETE FROM hockey', ())
 
     def get_team_matches(self, sport, team):
+        result = list()
+        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team`, `photo` FROM "{sport}" ORDER BY `date` ASC', ())
+        for element in data:
+            if len(result) >= 5:
+                break
+            elif (team.lower() in element[1].lower() or team.lower() in element[2].lower()) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
+                result.append(element)
+        return result
+
+    def get_basketball_matches(self, sport, team):
         result = list()
         data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" ORDER BY `date` ASC', ())
         for element in data:
@@ -95,8 +108,17 @@ class DbAct:
 class BuildPhoto:
     def __init__(self, logo1, logo2, sport):
         super(BuildPhoto, self).__init__()
+        self.__logo1_link = logo1
+        self.__logo2_link = logo2
+        self.prepare_links()
+        self.download_image(sport, self.__logo1_link, f'img/temp/{sport}/logo1.png')
+        self.download_image(sport, self.__logo2_link, f'img/temp/{sport}/logo2.png')
         background_image = self.choose_background(sport)
-        self.build(logo1, logo2, background_image)
+        self.build(f'img/temp/{sport}/logo1.png', f'img/temp/{sport}/logo2.png', background_image, sport)
+
+    def prepare_links(self):
+        self.__logo1_link = self.__logo1_link.replace('small', 'big')
+        self.__logo2_link = self.__logo2_link.replace('small', 'big')
 
     def choose_background(self, sport):
         match sport:
@@ -107,14 +129,21 @@ class BuildPhoto:
             case 'hockey':
                 return 'img/background_hockey.jpg'
 
-    def download_image(self, link, path):
+    def download_image(self, sport, link, path):
         response = requests.get(link)
         if response.status_code == 200:
             with open(path, 'wb') as f:
                 f.write(response.content)
-            print("Фото успешно скачано как", filename)
+        else:
+            shutil.copyfile(f'img/{sport}/no.png', path)
+        img = Image.open(path)
+        new_image = img.resize((100, 100))
+        new_image.save(path)
 
-    def build(self, logo1, logo2, background_image):
+    def build(self, logo1, logo2, background_image, sport):
+        logo1 = Image.open(logo1)
+        logo2 = Image.open(logo2)
+        background_image = Image.open(background_image)
         logo1_width, logo1_height = logo1.size
         logo2_width, logo2_height = logo2.size
         padding = 50
@@ -125,4 +154,4 @@ class BuildPhoto:
         combined_image.paste(logo2, (logo1_width + padding, (combined_height - logo2_height) // 2))
         background_image = background_image.resize((combined_width, combined_height))
         combined_image = Image.alpha_composite(background_image.convert('RGBA'), combined_image)
-        combined_image.save("combined_logos_with_background.png")
+        combined_image.save(f'img/temp/{sport}/result.png')
