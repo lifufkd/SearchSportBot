@@ -24,7 +24,7 @@ class Bot_inline_btns:
     def new_btns(self):
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         assortiment = types.KeyboardButton('Футбол ⚽️')
-        cart = types.KeyboardButton('Хоккей🏒 ')
+        cart = types.KeyboardButton('Хоккей🏒')
         bonus = types.KeyboardButton('Баскетбол 🏀')
         keyboard.add(assortiment, cart, bonus)
         return keyboard

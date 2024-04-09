@@ -204,20 +204,18 @@ class Leon:
     def get_data(self, metch):
         self.__driver.get('https://leon.ru/')
         time.sleep(2)
-        self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.__driver.execute_script("window.scrollTo(0, 0);")
         element = WebDriverWait(self.__driver, 10).until(
             EC.presence_of_element_located(
                 (By.XPATH, '/html/body/div[2]/header/div/div/div/div[2]/div[1]/button')))
         element.click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.NAME, 'search').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(5)
+        time.sleep(7)
         data = self.__driver.find_element(By.XPATH, '/html/body/div[3]/div/div/div/div[2]/div/div[1]/div').text
         return data
 
     def third_task(self, sport):
-        time.sleep(5)
+        time.sleep(7)
         match sport:
             case 'football':
                 return self.__driver.find_element(By.XPATH,
@@ -230,7 +228,7 @@ class Leon:
                                           '/html/body/div[2]/section/div/main/div[2]/div[3]/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[3]').text
 
     def second_task(self, section, index, one_line):
-        time.sleep(5)
+        time.sleep(7)
         if not one_line:
             self.__driver.find_element(By.XPATH,
                                        f'/html/body/div[3]/div/div/div/div[2]/div/div[1]/div/div[2]/div/section[{section}]/ul/li[{index}]/a').click()
@@ -327,26 +325,24 @@ class OlimpBet:
 
     def get_data(self, metch):
         self.__driver.get('https://www.olimp.bet/')
-        time.sleep(5)
-        self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.__driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(7)
         element = WebDriverWait(self.__driver, 10).until(
             EC.presence_of_element_located(
                 (By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[2]/div[1]/div[1]/div/button[2]')))
         element.click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(5)
+        time.sleep(7)
         data = self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[2]/div[1]/div/div[2]').text
         return data
 
     def third_task(self):
-        time.sleep(5)
+        time.sleep(7)
         return self.__driver.find_element(By.XPATH,
                                           '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]/div[1]/div[2]/div/div[2]/div/div/div[1]').text
 
     def second_task(self, atempt, index):
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH,
                                    f'/html/body/div[{atempt}]/div/div[2]/div/div/div[{index}]/a').click()
 
@@ -415,8 +411,7 @@ class Pari:
                                 pass
                         if flag:
                             current_url = self.__driver.current_url
-                            ratio = self.third_task(sport).split('\n')
-                            print(ratio)
+                            ratio = self.third_task(sport)
                             sm1 = SequenceMatcher(a=selected_team.lower(),
                                                   b=ratio[0].lower()).ratio()
                             if sport != 'basketball':
@@ -460,36 +455,34 @@ class Pari:
             print(e)
             self.error_parse(user_id)
 
-
-
     def get_data(self, metch):
         self.__driver.get('https://www.pari.ru/')
-        time.sleep(5)
-        self.__driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.__driver.execute_script("window.scrollTo(0, 0);")
+        time.sleep(7)
         element = WebDriverWait(self.__driver, 10).until(
             EC.presence_of_element_located(
                 (By.XPATH, '/html/body/div[1]/div[2]/header/div[2]/div/div[2]/a')))
         element.click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, '/html/body/div[5]/div/div/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(5)
+        time.sleep(7)
         search_place = self.__driver.find_element(By.XPATH, '//*[@id="search-container"]')
         data = search_place.text
         return data
 
     def third_task(self, sport):
-        time.sleep(5)
+        time.sleep(7)
+        data = self.__driver.find_element(By.XPATH,
+                                                  '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]').text.split('\n')
         match sport:
             case 'football':
-                return self.__driver.find_element(By.XPATH,
-                                                  '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]/div[1]/div[2]/div/div[2]/div/div/div[1]').text
+                index = data.index('Исход матча (основное время)')
+                return data[index+1:index+7]
             case 'hockey':
-                return self.__driver.find_element(By.XPATH,
-                                                  '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]/div[2]/div[2]/div[1]/div[2]/div/div/div[1]').text
+                index = data.index('Исход матча')
+                return data[index+1:index+7]
             case 'basketball':
-                return self.__driver.find_element(By.XPATH,
-                                                  '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]/div[1]/div[2]/div/div/div').text
+                index = data.index('Исход')
+                return data[index+1:index+5]
 
     def second_task(self, atempt, index):
         time.sleep(1)
@@ -553,7 +546,8 @@ class FonBet:
                             and data[i + 1][:-8] == right_date):
                         self.second_task(element_quanity)
                         current_url = self.__driver.current_url
-                        ratio = self.third_task(sport).split('\n')
+                        ratio = self.third_task(sport)
+                        print(ratio)
                         sm1 = SequenceMatcher(a=selected_team.lower(),
                                               b=ratio[0].lower()).ratio()
                         if sport != 'basketball':
@@ -598,35 +592,38 @@ class FonBet:
 
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
-        time.sleep(5)
+        time.sleep(7)
         element = WebDriverWait(self.__driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span')))
         element.click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH,
                                    '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(f'{math[1]} - {math[2]}')
-        time.sleep(5)
+        time.sleep(7)
         return self.__driver.find_element(By.XPATH,
                                          '/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]').text
 
     def third_task(self, sport):
-        time.sleep(5)
+        time.sleep(7)
+        data = self.__driver.find_element(By.XPATH,
+                                          '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]').text.split('\n')
         match sport:
             case 'football':
-                return self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]/div[2]/div[2]/div/div/div[2]/div/div/div[1]').text
+                index = data.index('Исход матча (основное время)')
+                return data[index + 1:index + 7]
             case 'hockey':
-                return self.__driver.find_element(By.XPATH,
-                                                            '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]/div/div[1]/div[2]/div/div/div[1]').text
+                index = data.index('Исход матча')
+                return data[index + 1:index + 7]
             case 'basketball':
-                return self.__driver.find_element(By.XPATH,
-                                                            '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div[2]/div/div/div').text
+                index = data.index('Исход')
+                return data[index + 1:index + 5]
 
     def second_task(self, index):
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, f'/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]/div[2]/div[{index}]').click()
 
 
@@ -705,28 +702,28 @@ class LigaStavok:
 
     def get_data(self, metch):
         self.__driver.get('https://www.ligastavok.ru/')
-        time.sleep(5)
+        time.sleep(7)
         element = WebDriverWait(self.__driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="header-search"]')))
         element.click()
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[1]/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(5)
+        time.sleep(7)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[1]/div[1]/button').click()
-        time.sleep(5)
+        time.sleep(7)
         return self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[2]').text
 
     def choose_match(self, index):
-        time.sleep(5)
+        time.sleep(7)
         element = self.__driver.find_element(By.XPATH, f'/html/body/div[1]/div[3]/div[2]/div/div[2]/div/a[{index}]')
         self.__driver.execute_script("arguments[0].scrollIntoView(true);", element)
         ActionChains(self.__driver).move_to_element(element).click().perform()
 
     def get_ratio(self):
-        time.sleep(5)
+        time.sleep(7)
         data = self.__driver.find_elements(By.CLASS_NAME, f'market__outcomes-96e4e5')
-        while True:
-            for i in data:
-                cart = i.text
-                if len(cart.split('\n')) >= 7:
-                    return cart
+        for i in data:
+            cart = i.text
+            if len(cart.split('\n')) >= 6:
+                return cart
+
 
