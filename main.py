@@ -16,7 +16,7 @@ from threading import Lock
 from os import listdir
 from os.path import isfile, join
 from datetime import datetime
-from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, OlimpBet, Leon
+from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, BetBoom, Leon
 from frontend import Bot_inline_btns
 from backend import TempUserData, DbAct
 from db import DB
@@ -90,12 +90,14 @@ def waiter(user_id, s=''):
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
     temp_user_data.temp_data(user_id)[user_id][0] = None
     cleaner()
-    if temp_user_data.temp_data(user_id)[user_id][1] != 'basketball':
-        bot.send_photo(chat_id=user_id, caption=s, parse_mode='html', photo=temp_user_data.temp_data(user_id)[user_id][3][3])
-    else:
-        bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
+    bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
     time.sleep(1)
-    bot.send_message(user_id, 'Хотите найти ещё кэфы?', reply_markup=buttons.new_btns())
+    if 'матч не найден' in s:
+        bot.send_message(user_id, 'Матч вижу, но не вижу коэффициенты в БК. Возможно, букмекеры еще не дали коэффициенты.\nХотите найти ещё кэфы?', reply_markup=buttons.new_btns())
+    else:
+        bot.send_message(user_id,
+                         'Хотите найти ещё кэфы?',
+                         reply_markup=buttons.new_btns())
     ### функция пользовательского поиска
     #if 'матч не найден' in s:
         #temp_user_data.temp_data(user_id)[user_id][0] = 3
@@ -114,6 +116,7 @@ def get_all_ratio(user_id):
     threading.Thread(target=FonBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
     #threading.Thread(target=OlimpBet, args=(sport, selected_teams, temp_user_data, user_id)).start()# work all
     threading.Thread(target=Pari, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start() # work all
+    #threading.Thread(target=BetBoom, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
     threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()
     threading.Thread(target=waiter, args=(user_id, )).start()
 
@@ -127,19 +130,17 @@ def main():
         db_actions.add_user(user_id, message.from_user.first_name, message.from_user.last_name,
                             f'@{message.from_user.username}')
         if command == 'start':
-            bot.send_message(message.chat.id, 'Я — ваш помощник в мире ставок на спорт Помогу найти самые выгодные '
-                                              'коэффициенты среди лучших букмекерских компаний Всё, что вам нужно сделать'
-                                              ' — это выбрать вид спорта, написать команду, на которую хотите поставить, '
-                                              'и выбрать интересующий вас матч из списка Я выдам вам коэффициенты на этот '
-                                              'матч по разным БК, чтобы вы могли сделать самую выгодную ставку'
-                                              'Вот по каким букмекерам я могу искать:\n[Фонбэт](https://www.fon.bet/)\n'
-                                              '[Лига ставок](https://www.ligastavok.ru/)\n'
-                                              '[Pari](https://www.pari.ru/)\n[Леон](https://leon.ru/)',
-                             reply_markup=buttons.start_btns(), parse_mode='MarkdownV2')
-        elif db_actions.user_is_admin(user_id):
-            if command == 'admin':
-                bot.send_message(message.chat.id, f'{message.from_user.first_name}, вы успешно вошли в Админ-Панель ✅',
-                                 reply_markup=buttons.admin_btns())
+            bot.send_message(message.chat.id, 'Я - ваш помощник в мире ставок на спорт. Помогу найти самые выгодные '
+                                              'коэффициенты среди лучших букмекерских компаний. Всё, что вам нужно сделать'
+                                              ' - это выбрать вид спорта, написать команду, на которую хотите поставить, '
+                                              'и выбрать интересующий вас матч из списка. Я выдам вам коэффициенты на '
+                                              'этот матч по разным БК, чтобы вы могли сделать самую выгодную ставку Вот '
+                                              'по каким букмекерам я могу искать:\n'
+                                              '<a href="https://www.fon.bet/">FonBet</a>\n'
+                                              '<a href="https://www.ligastavok.ru/">Лига ставок</a>\n'
+                                              '<a href="https://www.pari.ru/">Pari</a>\n'
+                                              '<a href="https://leon.ru/">Леон</a>',
+                             reply_markup=buttons.start_btns(), parse_mode='html')
 
     @bot.callback_query_handler(func=lambda call: True)
     def callback(call):
@@ -152,11 +153,6 @@ def main():
             elif command[:4] == 'game' and code == 1:
                 temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
                 get_all_ratio(user_id)
-            if db_actions.user_is_admin(user_id):
-                if command == 'export':
-                    db_actions.db_export_xlsx()
-                    bot.send_document(call.message.chat.id, open(config.get_config()['xlsx_path'], 'rb'))
-                    os.remove(config.get_config()['xlsx_path'])
 
     @bot.message_handler(content_types=['text', 'photo'])
     def text_message(message):
@@ -168,11 +164,7 @@ def main():
             match code:
                 case 0:
                     if user_input is not None:
-                        if temp_user_data.temp_data(user_id)[user_id][1] != 'basketball':
-                            full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
-                        else:
-                            full_data = db_actions.get_basketball_matches(temp_user_data.temp_data(user_id)[user_id][1],
-                                                                    user_input)
+                        full_data = db_actions.get_team_matches(temp_user_data.temp_data(user_id)[user_id][1], user_input)
                         temp_user_data.temp_data(user_id)[user_id][5] = user_input
                         if len(full_data) > 0:
                             if len(full_data) == 1:

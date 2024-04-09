@@ -61,10 +61,8 @@ class DbAct:
             return status
 
     def update_sport(self, sport, data):
-        self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team, photo) VALUES(?, ?, ?, ?)', data)
-
-    def update_basketball(self, sport, data):
         self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team) VALUES(?, ?, ?)', data)
+
 
     def last_sport_date(self, sport):
         return self.__db.db_read(f'SELECT MAX(date) FROM "{sport}"', ())[0][0]
@@ -76,16 +74,6 @@ class DbAct:
 
     def get_team_matches(self, sport, team):
         result = list()
-        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team`, `photo` FROM "{sport}" ORDER BY `date` ASC', ())
-        for element in data:
-            if len(result) >= 5:
-                break
-            elif (team.lower() in element[1].lower() or team.lower() in element[2].lower()) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
-                result.append(element)
-        return result
-
-    def get_basketball_matches(self, sport, team):
-        result = list()
         data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" ORDER BY `date` ASC', ())
         for element in data:
             if len(result) >= 5:
@@ -93,16 +81,6 @@ class DbAct:
             elif (team.lower() in element[1].lower() or team.lower() in element[2].lower()) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
                 result.append(element)
         return result
-
-    def db_export_xlsx(self):
-        d = {'Имя': [], 'Фамилия': [], 'Никнейм': []}
-        users = self.__db.db_read('SELECT first_name, last_name, nick_name FROM users', ())
-        if len(users) > 0:
-            for user in users:
-                for info in range(len(list(user))):
-                    d[self.__fields[info]].append(user[info])
-            df = pd.DataFrame(d)
-            df.to_excel(self.__config.get_config()['xlsx_path'], sheet_name='пользователи', index=False)
 
 
 class BuildPhoto:

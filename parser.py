@@ -5,7 +5,6 @@
 #####################################
 import json
 import os
-import glob
 import undetected_chromedriver as uc
 import time
 import sys
@@ -13,7 +12,6 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from backend import BuildPhoto
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -57,31 +55,17 @@ class UpdateMatches:
         self.updater(sport)
 
     def main_script(self, formatted_date, sport, start_date):
-        icon_start = 0
         try:
-            games_data, icons = self.get_content(formatted_date, sport)
-            print(len(icons))
+            games_data = self.get_content(formatted_date, sport)
             if 'нет соревнований' not in games_data:
                 array_games_data = games_data.split('\n')[3:]
                 for index, element in enumerate(array_games_data):
                     if len(element) == 5 and element[2] == ':':
-                        if sport != 'basketball':
-                            BuildPhoto(icons[icon_start], icons[icon_start + 1], sport)
-                            with open(f'img/temp/{sport}/result.png', 'rb') as file:
-                                data = file.read()
                         hours = int(array_games_data[index][:2])
                         minutes = int(array_games_data[index][3:])
                         datetime_with_time = datetime.combine(start_date, datetime.min.time()) + timedelta(hours=hours,
                                                                                                            minutes=minutes)
-                        if sport != 'basketball':
-                            self.__db_acts.update_sport(sport, [datetime_with_time, array_games_data[index + 2],
-                                                                array_games_data[index + 4], data])
-                            files = glob.glob(os.path.join(f'img/temp/{sport}', '*.*'))
-                            for file in files:
-                                os.remove(file)
-                            icon_start += 2
-                        else:
-                            self.__db_acts.update_basketball(sport, [datetime_with_time, array_games_data[index + 2],
+                        self.__db_acts.update_sport(sport, [datetime_with_time, array_games_data[index + 2],
                                                                 array_games_data[index + 4]])
 
         except Exception as e:
@@ -111,16 +95,10 @@ class UpdateMatches:
         self.__driver = uc.Chrome()
 
     def get_content(self, date, sport):
-        icons = list()
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
         time.sleep(2)
         parent = self.__driver.find_element(By.XPATH, f"/html/body/div[2]/section/div[2]/div[1]/div/div/div[4]/div")
-        child = parent.find_elements(By.TAG_NAME, 'img')
-        for i in child:
-            icon = i.get_attribute("src")
-            if sport in icon:
-                icons.append(icon)
-        return parent.text, icons
+        return parent.text
 
 
 class Leon:
@@ -725,5 +703,144 @@ class LigaStavok:
             cart = i.text
             if len(cart.split('\n')) >= 6:
                 return cart
+
+
+class BetBoom:
+    def __init__(self, selected_team, sport, math, temp_user_data, user_id):
+        super(BetBoom, self).__init__()
+        self.__month = {'01':'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
+                        '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
+                        '12': 'декабря'}
+        self.__month_r = {'01': 'января', '02': 'февраля', '03': 'марта', '04': 'апреля', '05': 'мая', '06': 'июня',
+                          '07': 'июля', '08': 'августа', '09': 'сентября', '10': 'октября', '11': 'ноября',
+                          '12': 'декабря'}
+        self.__driver = None
+        self.__temp_data = temp_user_data
+        self.__input_field = None
+        self.init()
+        self.parser(selected_team, sport, math, user_id)
+
+    def init(self):
+        options = Options()
+        options.add_argument('--start-maximized')
+        self.__driver = uc.Chrome()
+
+    def error_parse(self, user_id):
+        self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден', -1.00])
+        self.__driver.quit()
+        return False
+
+    def parser(self, selected_team , sport, math, user_id):
+        try:
+            data = self.get_data(math).split('\n')
+            print(data)
+            ratios = ['BetBoom: ', -1.00]
+            flag = False
+            element_quanity = 0
+            months = math[0][5:7]
+            day = math[0][8:10]
+            if day[0] == '0':
+                day = day[1]
+            right_date = f'{day}.{self.__month_r[months]}'
+            for i, g in enumerate(data):
+                if '—' in g:
+                    index = g.index('—')
+                    team1 = g[:index - 1]
+                    team2 = g[index + 2:]
+                    sm = SequenceMatcher(a=f'{math[1].lower()} - {math[2].lower()}',
+                                         b=f'{team1.lower()} - {team2.lower()}').ratio()
+                    print(sm, 'BetBoom')
+                    print(f"s date {f'{data[i + 1][:-8]}'} true date {right_date}", 'BetBoom')
+                    if ((sm >= 0.75 or (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and
+                        (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()))
+                            and data[i + 1][:-8] == right_date):
+                        for k in range(10):
+                            try:
+                                self.second_task(k, element_quanity)
+                                flag = True
+                                break
+                            except:
+                                pass
+                        if flag:
+                            current_url = self.__driver.current_url
+                            ratio = self.third_task(sport)
+                            sm1 = SequenceMatcher(a=selected_team.lower(),
+                                                  b=ratio[0].lower()).ratio()
+                            if sport != 'basketball':
+                                if sm1 >= 0.8:
+                                    cef = ratio[1]
+                                else:
+                                    cef = ratio[5]
+                                if math[1].lower() in ratio[0].lower():
+                                    ratios[1] = float(cef.replace(',', '.'))
+                                    ratios.append([math[1], ratio[1], current_url])
+                                    ratios.append(['ничья', ratio[3], current_url])
+                                    ratios.append([math[2], ratio[5], current_url])
+                                else:
+                                    ratios[1] = float(cef.replace(',', '.'))
+                                    ratios.append([math[1], ratio[5], current_url])
+                                    ratios.append(['ничья', ratio[3], current_url])
+                                    ratios.append([math[2], ratio[1], current_url])
+                            else:
+                                if sm1 >= 0.8:
+                                    cef = ratio[1]
+                                else:
+                                    cef = ratio[3]
+                                if math[1].lower() in ratio[0].lower():
+                                    ratios[1] = float(cef.replace(',', '.'))
+                                    ratios.append([math[1], ratio[1], current_url])
+                                    ratios.append(['ничья', '-', current_url])
+                                    ratios.append([math[2], ratio[3], current_url])
+                                else:
+                                    ratios[1] = float(cef.replace(',', '.'))
+                                    ratios.append([math[1], ratio[3], current_url])
+                                    ratios.append(['ничья', '-', current_url])
+                                    ratios.append([math[2], ratio[1], current_url])
+                            self.__temp_data.temp_data(user_id)[user_id][4].append(ratios)
+                            self.__driver.quit()
+                            return ratios
+                        else:
+                            self.error_parse(user_id)
+                element_quanity += 1
+            self.error_parse(user_id)
+        except Exception as e:
+            print(e)
+            self.error_parse(user_id)
+
+    def get_data(self, metch):
+        self.__driver.get('https://betboom.ru/')
+        time.sleep(3)
+        element = WebDriverWait(self.__driver, 10).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '/html/body/div[2]/div[2]/main/div[2]/div/button')))
+        element.click()
+        time.sleep(3)
+        self.__driver.find_element(By.XPATH, '//*[@id="searchPanel"]').send_keys(f'{metch[1]} - {metch[2]}')
+        time.sleep(3)
+        self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[1]/div/a/i').click()
+        time.sleep(3)
+        return self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[4]/div[2]/div/div[2]/div[10]/div/div/div[2]/div').text
+
+    def third_task(self, sport):
+        time.sleep(3)
+        data = self.__driver.find_element(By.XPATH,
+                                                  '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]').text.split('\n')
+        match sport:
+            case 'football':
+                index = data.index('Исход матча (основное время)')
+                return data[index+1:index+7]
+            case 'hockey':
+                index = data.index('Исход матча')
+                return data[index+1:index+7]
+            case 'basketball':
+                index = data.index('Исход')
+                return data[index+1:index+5]
+
+    def second_task(self, atempt, index):
+        time.sleep(1)
+        self.__driver.find_element(By.XPATH,
+                                   f'/html/body/div[{atempt}]/div/div[2]/div/div/div[{index}]/a').click()
+
+
 
 

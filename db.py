@@ -45,8 +45,7 @@ class DB:
                         row_id INTEGER primary key autoincrement not null,
                         date DATE,
                         first_team TEXT,
-                        second_team TEXT, 
-                        photo BLOB
+                        second_team TEXT
                         )
                         ''')
             self.__cursor.execute('''
@@ -54,8 +53,7 @@ class DB:
                                     row_id INTEGER primary key autoincrement not null,
                                     date DATE,
                                     first_team TEXT,
-                                    second_team TEXT,
-                                    photo BLOB
+                                    second_team TEXT
                                     )
                                     ''')
             self.__cursor.execute('''
