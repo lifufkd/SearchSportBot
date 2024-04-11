@@ -41,6 +41,20 @@ class DB:
             )
             ''')
             self.__cursor.execute('''
+                        CREATE TABLE teams_overwrite(
+                        row_id INTEGER primary key autoincrement not null,
+                        compare TEXT,
+                        fonbet TEXT,
+                        winline TEXT,
+                        betboom TEXT,
+                        liga TEXT,
+                        pari TEXT,
+                        olimpbet TEXT,
+                        leon TEXT,
+                        betcity TEXT
+                        )
+                        ''')
+            self.__cursor.execute('''
                         CREATE TABLE football(
                         row_id INTEGER primary key autoincrement not null,
                         date DATE,

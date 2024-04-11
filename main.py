@@ -16,9 +16,9 @@ from threading import Lock
 from os import listdir
 from os.path import isfile, join
 from datetime import datetime
-from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, BetBoom, Leon
+from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, BetCity, Leon, OlimpBet
 from frontend import Bot_inline_btns
-from backend import TempUserData, DbAct
+from backend import TempUserData, DbAct, Excel
 from db import DB
 #####################################
 
@@ -71,7 +71,7 @@ def waiter(user_id, s=''):
     temp = list()
     buttons = Bot_inline_btns()
     while True:
-        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 4:
+        if len(temp_user_data.temp_data(user_id)[user_id][4]) == 6:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
@@ -92,7 +92,7 @@ def waiter(user_id, s=''):
     cleaner()
     bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
     time.sleep(1)
-    if 'матч не найден' in s:
+    if s.count('матч не найден') == 6:
         bot.send_message(user_id, 'Матч вижу, но не вижу коэффициенты в БК. Возможно, букмекеры еще не дали коэффициенты.\nХотите найти ещё кэфы?', reply_markup=buttons.new_btns())
     else:
         bot.send_message(user_id,
@@ -111,13 +111,13 @@ def get_all_ratio(user_id):
     inp_team = temp_user_data.temp_data(user_id)[user_id][5]
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
-    bot.send_message(user_id, 'Ищу лучшие кэфы')
+    bot.send_message(user_id, f'Ищу лучшие кэфы на матч "{temp_user_data.temp_data(user_id)[user_id][3][1]} - {temp_user_data.temp_data(user_id)[user_id][3][2]}" 🔎\nМожет занять до 2 минут ⏳')
     threading.Thread(target=LigaStavok, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work all
     threading.Thread(target=FonBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
-    #threading.Thread(target=OlimpBet, args=(sport, selected_teams, temp_user_data, user_id)).start()# work all
+    threading.Thread(target=OlimpBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work all
     threading.Thread(target=Pari, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start() # work all
-    #threading.Thread(target=BetBoom, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
-    threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()
+    threading.Thread(target=BetCity, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
+    threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work fine
     threading.Thread(target=waiter, args=(user_id, )).start()
 
 
@@ -130,37 +130,49 @@ def main():
         db_actions.add_user(user_id, message.from_user.first_name, message.from_user.last_name,
                             f'@{message.from_user.username}')
         if command == 'start':
-            bot.send_message(message.chat.id, 'Я - ваш помощник в мире ставок на спорт. Помогу найти самые выгодные '
-                                              'коэффициенты среди лучших букмекерских компаний. Всё, что вам нужно сделать'
-                                              ' - это выбрать вид спорта, написать команду, на которую хотите поставить, '
-                                              'и выбрать интересующий вас матч из списка. Я выдам вам коэффициенты на '
-                                              'этот матч по разным БК, чтобы вы могли сделать самую выгодную ставку Вот '
-                                              'по каким букмекерам я могу искать:\n'
+            bot.send_message(message.chat.id, 'Я - ваш помощник в мире ставок на спорт 🏆\nПомогу найти самые выгодные '
+                                              'коэффициенты среди лучших\nбукмекерских компаний 🎯\n\nКак это работает:\nВыберите'
+                                              ' вид спорта ->\nНапишите название команды ->\nВыберите интересующий вас матч\n\n'
+                                              ' Найду коэффициенты на это событие по разным БК, чтобы вы могли сделать '
+                                              'самую выгодную ставку 💰\n\nВот по каким букмекерам я могу искать:\n\n'
                                               '<a href="https://www.fon.bet/">FonBet</a>\n'
                                               '<a href="https://www.ligastavok.ru/">Лига ставок</a>\n'
                                               '<a href="https://www.pari.ru/">Pari</a>\n'
-                                              '<a href="https://leon.ru/">Леон</a>',
-                             reply_markup=buttons.start_btns(), parse_mode='html')
+                                              '<a href="https://leon.ru/">Леон</a>\n'
+                                              '<a href="https://betcity.ru/ru">БэтСити</a>\n'
+                                              '<a href="https://www.olimp.bet/">Olimpbet</a>\n',
+                             reply_markup=buttons.start_btns(), parse_mode='html', disable_web_page_preview=True)
+        elif command == 'admin':
+            if db_actions.user_is_admin(user_id):
+                bot.send_message(user_id, 'Вы попали в админ панель', reply_markup=buttons.admin_btns())
 
     @bot.callback_query_handler(func=lambda call: True)
     def callback(call):
         command = call.data
+        buttons = Bot_inline_btns()
         user_id = call.message.chat.id
         if db_actions.user_is_existed(user_id):
             code = temp_user_data.temp_data(user_id)[user_id][0]
             if command[:5] == 'sport':
                 choose_sport(user_id, command[5:])
             elif command[:4] == 'game' and code == 1:
-                temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
-                get_all_ratio(user_id)
+                if command[4:] == 'Выбрать спорт':
+                    temp_user_data.temp_data(user_id)[user_id][0] = None
+                    bot.send_message(user_id, 'Выберите спорт', reply_markup=buttons.new_btns())
+                else:
+                    temp_user_data.temp_data(user_id)[user_id][3] = temp_user_data.temp_data(user_id)[user_id][2][int(command[4:])]
+                    get_all_ratio(user_id)
+            elif command == 'update_often_teams':
+                temp_user_data.temp_data(user_id)[user_id][0] = 4
+                bot.send_message(user_id, 'Отправьте новую таблицу в формате .xlsx')
 
-    @bot.message_handler(content_types=['text', 'photo'])
+    @bot.message_handler(content_types=['text', 'photo', 'document'])
     def text_message(message):
         user_input = message.text
         user_id = message.chat.id
         buttons = Bot_inline_btns()
+        code = temp_user_data.temp_data(user_id)[user_id][0]
         if db_actions.user_is_existed(user_id):
-            code = temp_user_data.temp_data(user_id)[user_id][0]
             match code:
                 case 0:
                     if user_input is not None:
@@ -202,6 +214,17 @@ def main():
                             choose_sport(user_id, 'hockey')
                         case 'Баскетбол 🏀':
                             choose_sport(user_id, 'basketball')
+            if db_actions.user_is_admin(user_id):
+                match code:
+                    case 4:
+                        document_id = message.document.file_id
+                        file_info = bot.get_file(document_id)
+                        downloaded_file = bot.download_file(file_info.file_path)
+                        with open(config.get_config()['teams_xlsx_doc'], 'wb') as new_file:
+                            new_file.write(downloaded_file)
+                        data = excel.read_teams_names()
+                        db_actions.update_overwrite_teams(data)
+
 
 
     bot.polling(none_stop=True)
@@ -214,6 +237,7 @@ if '__main__' == __name__:
     temp_user_data = TempUserData()
     db = DB(config.get_config()['db_file_name'], Lock())
     db_actions = DbAct(db, config, config.get_config()['xlsx_path'])
+    excel = Excel(config, db, db_actions)
     threading.Thread(target=schedule_worker).start()
     schedule.every().day.at('00:00').do(sync_db)
     bot = telebot.TeleBot(config.get_config()['tg_api'])

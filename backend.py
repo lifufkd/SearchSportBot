@@ -5,6 +5,7 @@
 #####################################
 import os
 import time
+import openpyxl
 import shutil
 import requests
 from PIL import Image
@@ -63,6 +64,19 @@ class DbAct:
     def update_sport(self, sport, data):
         self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team) VALUES(?, ?, ?)', data)
 
+    def update_overwrite_teams(self, data):
+        self.__db.db_write('DELETE FROM teams_overwrite', ())
+        for element in data:
+            teams = list()
+            print(len(element))
+            for i, g in enumerate(element):
+                if i <= 8:
+                    if g is not None:
+                        teams.append(g)
+                    else:
+                        teams.append('')
+            print(teams)
+            self.__db.db_write('INSERT INTO teams_overwrite (compare, fonbet, winline, betboom, liga, pari, olimpbet, leon, betcity) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)', teams)
 
     def last_sport_date(self, sport):
         return self.__db.db_read(f'SELECT MAX(date) FROM "{sport}"', ())[0][0]
@@ -133,3 +147,19 @@ class BuildPhoto:
         background_image = background_image.resize((combined_width, combined_height))
         combined_image = Image.alpha_composite(background_image.convert('RGBA'), combined_image)
         combined_image.save(f'img/temp/{sport}/result.png')
+
+
+class Excel:
+    def __init__(self, config, db, db_actions):
+        super(Excel, self).__init__()
+        self.__db = db
+        self.__config = config
+        self.__db_actions = db_actions
+
+    def read_teams_names(self):
+        wb = openpyxl.load_workbook(self.__config.get_config()['teams_xlsx_doc'])
+        sheet = wb.active
+        data = []
+        for row in sheet.iter_rows(values_only=True):
+            data.append(row)
+        return data

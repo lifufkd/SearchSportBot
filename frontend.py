@@ -30,8 +30,9 @@ class Bot_inline_btns:
         return keyboard
 
     def admin_btns(self):
-        export = types.InlineKeyboardButton('Экспорт БД', callback_data='export')
-        self.__markup.add(export)
+        btn1 = types.InlineKeyboardButton('обновить частые команды', callback_data='update_often_teams')
+        #export = types.InlineKeyboardButton('Экспорт БД', callback_data='export')
+        self.__markup.add(btn1)
         return self.__markup
 
     def games_btns(self, games):
@@ -39,4 +40,6 @@ class Bot_inline_btns:
         for i in range(games):
             btn = types.InlineKeyboardButton(f'{i+1}', callback_data=f'game{i}')
             markup.add(btn)
+        btn = types.InlineKeyboardButton(f'Найти другую команду', callback_data=f'gameВыбрать спорт')
+        markup.add(btn)
         return markup
