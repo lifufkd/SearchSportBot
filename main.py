@@ -173,6 +173,13 @@ def main():
         buttons = Bot_inline_btns()
         code = temp_user_data.temp_data(user_id)[user_id][0]
         if db_actions.user_is_existed(user_id):
+            match user_input:
+                case 'Футбол ⚽️':
+                    choose_sport(user_id, 'football')
+                case 'Хоккей🏒':
+                    choose_sport(user_id, 'hockey')
+                case 'Баскетбол 🏀':
+                    choose_sport(user_id, 'basketball')
             match code:
                 case 0:
                     if user_input is not None:
@@ -189,7 +196,7 @@ def main():
                                 bot.send_message(user_id, f'Для этой команды нашлось {len(full_data)} матчей: \n{s}',
                                                  reply_markup=buttons.games_btns(len(full_data)))
                         else:
-                            bot.send_message(user_id, 'Попробуйте написать по другому: не нашел команду :(')
+                            bot.send_message(user_id, 'Попробуйте написать по другому: не нашел команду :(', reply_markup=buttons.new_btns())
                     else:
                         bot.send_message(user_id, 'Это не текст!')
                 case 3:
@@ -206,14 +213,6 @@ def main():
                             bot.send_message(user_id, 'Без знака "-" я не понимаю как отличить 2 команды. Напишите ещё раз')
                     else:
                         bot.send_message(user_id, 'Это не текст!')
-                case None:
-                    match user_input:
-                        case 'Футбол ⚽️':
-                            choose_sport(user_id, 'football')
-                        case 'Хоккей🏒':
-                            choose_sport(user_id, 'hockey')
-                        case 'Баскетбол 🏀':
-                            choose_sport(user_id, 'basketball')
             if db_actions.user_is_admin(user_id):
                 match code:
                     case 4:
@@ -236,8 +235,6 @@ if '__main__' == __name__:
     db = DB(config.get_config()['db_file_name'], Lock())
     db_actions = DbAct(db, config, config.get_config()['xlsx_path'])
     excel = Excel(config, db, db_actions)
-    display = pyvirtualdisplay.Display()
-    display.start()
     threading.Thread(target=schedule_worker).start()
     schedule.every().day.at('00:00').do(sync_db)
     sync_db()

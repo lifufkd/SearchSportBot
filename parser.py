@@ -99,6 +99,7 @@ class UpdateMatches:
 
     def init(self):
         options = uc.ChromeOptions()
+        options.add_argument('--headless')
         options.add_argument("--window-size=1280,720")
         self.__driver = uc.Chrome(options=options)
 
