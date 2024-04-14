@@ -99,11 +99,8 @@ class UpdateMatches:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def get_content(self, date, sport):
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
@@ -129,11 +126,8 @@ class Leon:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден', -1.00])
@@ -195,16 +189,16 @@ class Leon:
 
     def get_data(self, metch):
         self.__driver.get('https://leon.ru/')
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[2]/header/div/div/div/div[2]/div[1]/button').click()
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.NAME, 'search').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(7)
+        time.sleep(10)
         data = self.__driver.find_element(By.XPATH, '/html/body/div[3]/div/div/div/div[2]/div/div[1]/div').text
         return data
 
     def third_task(self, sport):
-        time.sleep(7)
+        time.sleep(10)
         match sport:
             case 'football':
                 return self.__driver.find_element(By.XPATH,
@@ -217,7 +211,7 @@ class Leon:
                                           '/html/body/div[2]/section/div/main/div[2]/div[3]/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[3]').text
 
     def second_task(self, section, index, one_line):
-        time.sleep(7)
+        time.sleep(10)
         if not one_line:
             self.__driver.find_element(By.XPATH,
                                        f'/html/body/div[3]/div/div/div/div[2]/div/div[1]/div/div[2]/div/section[{section}]/ul/li[{index}]/a').click()
@@ -243,11 +237,8 @@ class OlimpBet:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден', -1.00])
@@ -285,14 +276,15 @@ class OlimpBet:
                     if ((sm >= 0.75 or (math[1].lower() in team1.lower() or math[1].lower() in team2.lower()) and
                         (math[2].lower() in team1.lower() or math[2].lower() in team2.lower()))
                             and data[i + 2][:-6] == right_date):
-                        if sport != 'hockey':
-                            ratio1 = data[i+3]
-                            ratio2 = data[i+4]
-                            ratio3 = data[i+5]
-                        else:
-                            ratio1 = data[i+4]
-                            ratio2 = data[i+5]
-                            ratio3 = data[i+6]
+                        for index, k in enumerate(data[i+2:]):
+                            try:
+                                float(k)
+                                ratio1 = data[index+2+i]
+                                ratio2 = data[index+3+i]
+                                ratio3 = data[index+4+i]
+                                break
+                            except:
+                                pass
                         if ratio2 == '—' and sport != 'basketball':
                             continue
                         sm1 = SequenceMatcher(a=selected_team.lower(),
@@ -322,11 +314,11 @@ class OlimpBet:
     def get_data(self, metch):
         self.__driver.get('https://www.olimp.bet/')
         links = list()
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[2]/div[1]/div[1]/div/button[2]').click()
-        time.sleep(2)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[1]/div/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(7)
+        time.sleep(10)
         data = self.__driver.find_element(By.XPATH, '/html/body/div[2]/div/div[2]/div/div[2]/div[1]/div/div[2]')
         child = data.find_elements(By.TAG_NAME, 'a')
         for i in child:
@@ -352,11 +344,8 @@ class Pari:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден', -1.00])
@@ -449,17 +438,17 @@ class Pari:
 
     def get_data(self, metch):
         self.__driver.get('https://www.pari.ru/')
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/header/div[2]/div/div[2]/a').click()
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[5]/div/div/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(7)
+        time.sleep(10)
         search_place = self.__driver.find_element(By.XPATH, '//*[@id="search-container"]')
         data = search_place.text
         return data
 
     def third_task(self, sport):
-        time.sleep(7)
+        time.sleep(10)
         data = self.__driver.find_element(By.XPATH,
                                                   '/html/body/div[2]/div/div[4]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div[3]/div[1]/div/div[1]').text.split('\n')
         match sport:
@@ -496,11 +485,8 @@ class FonBet:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден', -1.00])
@@ -584,21 +570,21 @@ class FonBet:
 
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
-        time.sleep(1)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH,
                                    '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
-        time.sleep(1)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(f'{math[1]} - {math[2]}')
-        time.sleep(7)
+        time.sleep(10)
         return self.__driver.find_element(By.XPATH,
                                          '/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]').text
 
     def third_task(self, sport):
-        time.sleep(7)
+        time.sleep(10)
         data = self.__driver.find_element(By.XPATH,
                                           '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]').text.split('\n')
         match sport:
@@ -613,7 +599,7 @@ class FonBet:
                 return data[index + 1:index + 5]
 
     def second_task(self, index):
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, f'/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]/div[2]/div[{index}]').click()
 
 
@@ -631,11 +617,8 @@ class LigaStavok:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден', -1.00])
@@ -695,23 +678,23 @@ class LigaStavok:
 
     def get_data(self, metch):
         self.__driver.get('https://www.ligastavok.ru/')
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '//*[@id="header-search"]').click()
-        time.sleep(1)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[1]/div[1]/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(1)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[1]/div[1]/button').click()
-        time.sleep(7)
+        time.sleep(10)
         return self.__driver.find_element(By.XPATH, '/html/body/div[1]/div[3]/div[2]/div/div[2]').text
 
     def choose_match(self, index):
-        time.sleep(7)
+        time.sleep(10)
         element = self.__driver.find_element(By.XPATH, f'/html/body/div[1]/div[3]/div[2]/div/div[2]/div/a[{index}]')
         self.__driver.execute_script("arguments[0].scrollIntoView(true);", element)
         ActionChains(self.__driver).move_to_element(element).click().perform()
 
     def get_ratio(self):
-        time.sleep(7)
+        time.sleep(10)
         data = self.__driver.find_elements(By.CLASS_NAME, f'market__outcomes-96e4e5')
         for i in data:
             cart = i.text
@@ -736,11 +719,8 @@ class BetCity:
 
     def init(self):
         options = uc.ChromeOptions()
-        options.add_argument('--disable-dev-shm-usage')  # Required for Linux systems
-        options.add_argument('--no-sandbox')  # Required for Linux systems
-        options.add_argument('--disable-gpu')  # Required for Windows systems
-        options.add_argument('--enable-javascript')
-        self.__driver = uc.Chrome()
+        options.add_argument("--window-size=1280,720")
+        self.__driver = uc.Chrome(options=options)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['BetCity: матч не найден', -1.00])
@@ -812,11 +792,11 @@ class BetCity:
     def get_data(self, metch):
         self.__driver.get('https://betcity.ru/')
         links = list()
-        time.sleep(7)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/app-root/header/app-sub-header/app-quick-search/div/form/app-input-text/span/input').send_keys(f'{metch[1]} - {metch[2]}')
-        time.sleep(1)
+        time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/app-root/header/app-sub-header/app-quick-search/div/form/button').click()
-        time.sleep(7)
+        time.sleep(10)
         parent = self.__driver.find_element(By.XPATH,
                                           '/html/body/app-root/main/div/app-search/div')
         child = parent.find_elements(By.TAG_NAME, 'a')
@@ -829,7 +809,7 @@ class BetCity:
 
     def second_task(self, link):
         self.__driver.get(link)
-        time.sleep(7)
+        time.sleep(10)
         teams_names = self.__driver.find_element(By.XPATH,
                                             '/html/body/app-root/main/div/app-events-line/div[2]/div[2]/div[1]/app-line-event-unit/div').text.split('\n')[1:]
         print(teams_names)
