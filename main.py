@@ -65,13 +65,16 @@ def cleaner():
                 pass
 
 
-def waiter(user_id, s=''):
+def waiter(user_id, s='', c=0):
     ratios = list()
     out = list()
     temp = list()
     buttons = Bot_inline_btns()
     while True:
+        c+=1
         if len(temp_user_data.temp_data(user_id)[user_id][4]) == 6:
+            break
+        elif c >= 180:
             break
         time.sleep(1)
     for i in temp_user_data.temp_data(user_id)[user_id][4]:
