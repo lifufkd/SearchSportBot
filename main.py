@@ -2,15 +2,15 @@
 #            Created by             #
 #               SBR                 #
 #####################################
-import copy
-
 config_name = 'secrets.json'
 #####################################
 import os
 import telebot
 import schedule
 import time
+import copy
 import platform
+import pyvirtualdisplay
 import threading
 from threading import Lock
 from os import listdir
@@ -225,8 +225,6 @@ def main():
                         data = excel.read_teams_names()
                         db_actions.update_overwrite_teams(data)
 
-
-
     bot.polling(none_stop=True)
 
 
@@ -238,7 +236,10 @@ if '__main__' == __name__:
     db = DB(config.get_config()['db_file_name'], Lock())
     db_actions = DbAct(db, config, config.get_config()['xlsx_path'])
     excel = Excel(config, db, db_actions)
+    display = pyvirtualdisplay.Display()
+    display.start()
     threading.Thread(target=schedule_worker).start()
     schedule.every().day.at('00:00').do(sync_db)
+    sync_db()
     bot = telebot.TeleBot(config.get_config()['tg_api'])
     main()
