@@ -476,7 +476,10 @@ class FonBet:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        self.__driver = sb.Driver(ad_block_on=True, uc=True)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True, locale_code='RU')
+
+    def get_by_css_selector(self, path):
+        return self.__driver.find_element(By.CSS_SELECTOR, path)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден', -1.00])
@@ -557,40 +560,40 @@ class FonBet:
             print(e)
             self.error_parse(user_id)
 
-
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
-        time.sleep(10)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
-        time.sleep(10)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
-        time.sleep(10)
-        self.__driver.find_element(By.XPATH,
-                                   '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/span[3]').click()
-        time.sleep(10)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div[2]/div[2]/input').send_keys(f'{math[1]} - {math[2]}')
-        time.sleep(10)
-        return self.__driver.find_element(By.XPATH,
-                                         '/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]').text
+        time.sleep(5)
+        self.get_by_css_selector('html > body > application > div:nth-of-type(2) > div > div > div > div > div > div > div:nth-of-type(2) > div > span').click()
+        time.sleep(1)
+        self.get_by_css_selector('html > body > application > div:nth-of-type(3) > div > div > div > div > div > span').click()
+        time.sleep(1)
+        self.get_by_css_selector('html > body > application > div:nth-of-type(2) > div > div > div > div > div > div > div:nth-of-type(2) > span:nth-of-type(3)').click()
+        time.sleep(1)
+        self.get_by_css_selector('html > body > application > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > input').send_keys(f'{math[1]} - {math[2]}')
+        time.sleep(1)
+        return self.get_by_css_selector('html > body > application > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div').text
 
     def third_task(self, sport):
-        time.sleep(10)
-        data = self.__driver.find_element(By.XPATH,
-                                          '/html/body/application/div[2]/div[1]/div/div/div/div[2]/div/div/div[1]/div/div/div/div/div/div[1]/div/div[1]/div[2]').text.split('\n')
+        time.sleep(5)
+        data = self.get_by_css_selector('html > body > application > div:nth-of-type(2) > div > div > div > div > '
+                                        'div:nth-of-type(2) > div > div > div > div > div > div > div > div > div > '
+                                        'div > div > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > '
+                                        'div > div > div:nth-of-type(2) > div > div').text.split('\n')
         match sport:
             case 'football':
-                index = data.index('Исход матча (основное время)')
-                return data[index + 1:index + 7]
+                return data[0:6]
             case 'hockey':
-                index = data.index('Исход матча')
-                return data[index + 1:index + 7]
+                return data[0:6]
             case 'basketball':
-                index = data.index('Исход')
-                return data[index + 1:index + 5]
+                data = self.get_by_css_selector('html > body > application > div:nth-of-type(2) > div > div > div > '
+                                                'div > div:nth-of-type(2) > div > div > div > div > div > div > div > '
+                                                'div > div > div > div > div:nth-of-type(3) > div:nth-of-type(2) >'
+                                                ' div > div:nth-of-type(2) > div > div').text.split('\n')
+                return data[0:4]
 
     def second_task(self, index):
-        time.sleep(10)
-        self.__driver.find_element(By.XPATH, f'/html/body/application/div[3]/div[2]/div[3]/div[2]/div/div/div[1]/div[2]/div[{index}]').click()
+        print(index)
+        self.__driver.find_element(By.CSS_SELECTOR, f'html > body > application > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(2) > div > div > div > div:nth-of-type({index})').click()
 
 
 class LigaStavok:
