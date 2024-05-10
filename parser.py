@@ -476,7 +476,7 @@ class FonBet:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        self.__driver = sb.Driver(ad_block_on=True, uc=True, locale_code='RU')
+        self.__driver = sb.Driver(ad_block_on=True, uc=True, locale_code='RU', headless=True)
 
     def get_by_css_selector(self, path):
         return self.__driver.find_element(By.CSS_SELECTOR, path)
