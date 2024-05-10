@@ -561,7 +561,7 @@ class FonBet:
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
         time.sleep(10)
-        self.__driver.find_element(By.CLASS_NAME, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
+        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
         time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
         time.sleep(10)
