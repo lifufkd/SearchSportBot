@@ -29,6 +29,12 @@ class Bot_inline_btns:
         keyboard.add(assortiment, cart, bonus)
         return keyboard
 
+    def today_matches(self, data):
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        for index, i in enumerate(data):
+            button = types.KeyboardButton('')
+
+
     def admin_btns(self):
         btn1 = types.InlineKeyboardButton('обновить частые команды', callback_data='update_often_teams')
         #export = types.InlineKeyboardButton('Экспорт БД', callback_data='export')

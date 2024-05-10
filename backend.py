@@ -64,6 +64,15 @@ class DbAct:
     def update_sport(self, sport, data):
         self.__db.db_write(f'INSERT INTO "{sport}" (date, first_team, second_team) VALUES(?, ?, ?)', data)
 
+    def get_matches_today(self, sport):
+        out = list()
+        data = self.__db.db_read(f'SELECT `date`, `first_team`, `second_team` FROM "{sport}" WHERE `date` > ? LIMIT 5',
+                                 (datetime.now().date(), ))
+        for i in data:
+            if datetime.strptime(i[0],'%Y-%m-%d %H:%M:%S').date() == datetime.now().date():
+                out.append(i)
+        return out
+
     def update_overwrite_teams(self, data):
         self.__db.db_write('DELETE FROM teams_overwrite', ())
         for element in data:

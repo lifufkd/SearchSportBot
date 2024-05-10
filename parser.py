@@ -5,7 +5,7 @@
 #####################################
 import json
 import os
-import undetected_chromedriver as uc
+import seleniumbase as sb
 import time
 import sys
 from datetime import datetime, timedelta
@@ -98,10 +98,7 @@ class UpdateMatches:
             start_date += timedelta(days=1)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def get_content(self, date, sport):
         self.__driver.get(f'https://www.sport-express.ru/live/{sport}/{date}/')
@@ -126,9 +123,7 @@ class Leon:
         self.parser(selected_team , sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Leon: матч не найден', -1.00])
@@ -237,9 +232,7 @@ class OlimpBet:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['OlimpBet: матч не найден', -1.00])
@@ -344,9 +337,7 @@ class Pari:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Pari: матч не найден', -1.00])
@@ -485,9 +476,7 @@ class FonBet:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['FonBet: матч не найден', -1.00])
@@ -572,7 +561,7 @@ class FonBet:
     def get_data(self, math):
         self.__driver.get('https://www.fon.bet/')
         time.sleep(10)
-        self.__driver.find_element(By.XPATH, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
+        self.__driver.find_element(By.CLASS_NAME, '/html/body/application/div[2]/div[1]/div/div/div/div[1]/div/div[2]/div/span').click()
         time.sleep(10)
         self.__driver.find_element(By.XPATH, '/html/body/application/div[3]/div/div/div/div/div/span[1]').click()
         time.sleep(10)
@@ -617,9 +606,7 @@ class LigaStavok:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['Лига ставок: матч не найден', -1.00])
@@ -719,9 +706,7 @@ class BetCity:
         self.parser(selected_team, sport, math, user_id)
 
     def init(self):
-        options = uc.ChromeOptions()
-        options.add_argument("--window-size=1280,720")
-        self.__driver = uc.Chrome(options=options)
+        self.__driver = sb.Driver(ad_block_on=True, uc=True)
 
     def error_parse(self, user_id):
         self.__temp_data.temp_data(user_id)[user_id][4].append(['BetCity: матч не найден', -1.00])

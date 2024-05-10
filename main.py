@@ -10,11 +10,10 @@ import schedule
 import time
 import copy
 import platform
-import pyvirtualdisplay
 import threading
 from threading import Lock
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile
 from datetime import datetime
 from parser import ConfigParser, UpdateMatches, FonBet, LigaStavok, Pari, BetCity, Leon, OlimpBet
 from frontend import Bot_inline_btns
@@ -93,14 +92,18 @@ def waiter(user_id, s='', c=0):
     temp_user_data.temp_data(user_id)[user_id][4] = copy.deepcopy([])
     temp_user_data.temp_data(user_id)[user_id][0] = None
     cleaner()
-    bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True)
+    bot.send_message(user_id, s, parse_mode='html', disable_web_page_preview=True, reply_markup=buttons.new_btns())
+    today_matches = db_actions.get_matches_today(temp_user_data.temp_data(user_id)[user_id][1])
+    temp_user_data.temp_data(user_id)[user_id][2] = today_matches
+    s = matches(today_matches)
     time.sleep(1)
     if s.count('матч не найден') == 6:
-        bot.send_message(user_id, 'Матч вижу, но не вижу коэффициенты в БК. Возможно, букмекеры еще не дали коэффициенты.\nХотите найти ещё кэфы?', reply_markup=buttons.new_btns())
+        bot.send_message(user_id, 'Матч вижу, но не вижу коэффициенты в БК. Возможно, букмекеры еще не дали коэффициенты.\nХотите найти ещё кэфы?')
     else:
+        temp_user_data.temp_data(user_id)[user_id][0] = 1
         bot.send_message(user_id,
-                         'Хотите найти ещё кэфы?',
-                         reply_markup=buttons.new_btns())
+                         f'Хотите найти ещё кэфы? Я подобрал для вас похожие матчи\n\n{s}',
+                         reply_markup=buttons.games_btns(len(today_matches)))
     ### функция пользовательского поиска
     #if 'матч не найден' in s:
         #temp_user_data.temp_data(user_id)[user_id][0] = 3
@@ -199,7 +202,8 @@ def main():
                                 bot.send_message(user_id, f'Для этой команды нашлось {len(full_data)} матчей: \n{s}',
                                                  reply_markup=buttons.games_btns(len(full_data)))
                         else:
-                            bot.send_message(user_id, 'Попробуйте написать по другому: не нашел команду :(', reply_markup=buttons.new_btns())
+                            temp_user_data.temp_data(user_id)[user_id][0] = None
+                            bot.send_message(user_id, 'Не нашел, чтобы такая команда играла в ближайшее время. Попробуйте заново ⚽️ 🏒 🏀 «', reply_markup=buttons.new_btns())
                     else:
                         bot.send_message(user_id, 'Это не текст!')
                 case 3:
@@ -219,13 +223,14 @@ def main():
             if db_actions.user_is_admin(user_id):
                 match code:
                     case 4:
-                        document_id = message.document.file_id
-                        file_info = bot.get_file(document_id)
-                        downloaded_file = bot.download_file(file_info.file_path)
-                        with open(config.get_config()['teams_xlsx_doc'], 'wb') as new_file:
-                            new_file.write(downloaded_file)
-                        data = excel.read_teams_names()
-                        db_actions.update_overwrite_teams(data)
+                        #document_id = message.document.file_id
+                        #file_info = bot.get_file(document_id)
+                        #downloaded_file = bot.download_file(file_info.file_path)
+                        #with open(config.get_config()['teams_xlsx_doc'], 'wb') as new_file:
+                            #new_file.write(downloaded_file)
+                        #data = excel.read_teams_names()
+                        #db_actions.update_overwrite_teams(data)
+                        bot.send_message(user_id, 'Таблица успешно загружена!')
 
     bot.polling(none_stop=True)
 
@@ -240,6 +245,5 @@ if '__main__' == __name__:
     excel = Excel(config, db, db_actions)
     threading.Thread(target=schedule_worker).start()
     schedule.every().day.at('00:00').do(sync_db)
-    sync_db()
     bot = telebot.TeleBot(config.get_config()['tg_api'])
     main()
