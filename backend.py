@@ -101,7 +101,7 @@ class DbAct:
         for element in data:
             if len(result) >= 5:
                 break
-            elif (team.lower() in element[1].lower() or team.lower() in element[2].lower()) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") > datetime.now():
+            elif (team.lower() in element[1].lower() or team.lower() in element[2].lower()) and datetime.strptime(element[0], "%Y-%m-%d %H:%M:%S") >= datetime.now():
                 result.append(element)
         return result
 

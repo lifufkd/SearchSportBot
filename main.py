@@ -9,6 +9,7 @@ import telebot
 import schedule
 import time
 import copy
+import seleniumbase as sb
 import platform
 import threading
 from threading import Lock
@@ -25,7 +26,7 @@ from db import DB
 def sync_db():
     if datetime.now().month == 1 and datetime.now().day == 1 or config.get_config()['update_every_day']:
         for sport in ['football', 'hockey', 'basketball']:
-            threading.Thread(target=UpdateMatches, args=(db_actions, sport)).start()
+            threading.Thread(target=UpdateMatches, args=(db_actions, sport, sb.Driver(ad_block_on=True, uc=True, headless=True))).start()
 
 
 def choose_sport(user_id, sport):
@@ -113,17 +114,20 @@ def waiter(user_id, s='', c=0):
 
 
 def get_all_ratio(user_id):
+    drivers = list()
     selected_teams = temp_user_data.temp_data(user_id)[user_id][3]
     inp_team = temp_user_data.temp_data(user_id)[user_id][5]
     sport = temp_user_data.temp_data(user_id)[user_id][1]
     temp_user_data.temp_data(user_id)[user_id][0] = 2
     bot.send_message(user_id, f'Ищу лучшие кэфы на матч "{temp_user_data.temp_data(user_id)[user_id][3][1]} - {temp_user_data.temp_data(user_id)[user_id][3][2]}" 🔎\nМожет занять до 2 минут ⏳')
-    threading.Thread(target=LigaStavok, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=FonBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
-    threading.Thread(target=OlimpBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work all
-    threading.Thread(target=Pari, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start() # work all
-    threading.Thread(target=BetCity, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()  # work all
-    threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id)).start()# work fine
+    for i in range(6):
+        drivers.append(sb.Driver(ad_block_on=True, uc=True, headless=True))
+    threading.Thread(target=LigaStavok, args=(inp_team, sport, selected_teams, temp_user_data, user_id, drivers[0])).start()# work all
+    threading.Thread(target=FonBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id, drivers[1])).start()  # work all
+    threading.Thread(target=OlimpBet, args=(inp_team, sport, selected_teams, temp_user_data, user_id, drivers[2])).start()# work all
+    threading.Thread(target=Pari, args=(inp_team, sport, selected_teams, temp_user_data, user_id, drivers[3])).start() # work all
+    threading.Thread(target=BetCity, args=(inp_team, sport, selected_teams, temp_user_data, user_id, drivers[4])).start()  # work all
+    threading.Thread(target=Leon, args=(inp_team, sport, selected_teams, temp_user_data, user_id, drivers[5])).start()# work fine
     threading.Thread(target=waiter, args=(user_id, )).start()
 
 
